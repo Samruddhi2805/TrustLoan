@@ -1,85 +1,65 @@
-# TrustLoan Lite - Level 5 Stellar/Polygon MVP
+# TrustLoan Lite - Level 5 DApp MVP (Stellar/Soroban)
 
-A decentralized application (dApp) built to seamlessly evaluate user loan eligibility directly on-chain based on income and expenses without complex centralized intermediaries. 
+A high-performance Decentralized Finance application designed for instant, secure credit assessment on the Stellar network. TrustLoan Lite evaluates user eligibility using on-chain financial metrics and provides a comprehensive dashboard for user activity.
 
-This is the MVP (Minimum Viable Product) for Level 5 submission.
+## 🚀 Key Features
 
-## 🚀 Live Demo & Links
-- **Live dApp URL (Vercel)**: [https://trustloan-lite.vercel.app](https://trustloan-lite.vercel.app) *(Replace with actual URL)*
-- **Demo Video**: [Link to Loom/YouTube Video]
-- **Smart Contract Address**: [0xYourDeployedPolygonAmoyContractHere]
-- **Explorer Link**: [Polygonscan Amoy Explorer Link]
+- **Dark Aurora Glassmorphism UI**: High-end modern design built with React, Tailwind, and custom CSS animations.
+- **Smart Credit Logic**: Implements the $(\text{Expenses} + \text{Repayment}) / \text{Income} < 0.4$ DTI rule on-chain.
+- **Freighter Wallet Integration**: Connect and view Stellar testnet balances and authenticate via the Freighter API.
+- **Interactive Dashboard**: Track previous eligibility checks, average debt rations, and transaction history.
+- **Real-time Blockchain Proof**: Generates transaction hashes and links directly to the Stellar Explorer.
 
-## 🎭 UI/UX Design Theme
-- **Theme**: Dark Aurora Glassmorphism
-- **Features**: Animated deep space galaxy backgrounds, frosted glass cards (glassmorphism), neon pulsing glows, and floating blob animations. Built using pure vanilla CSS and functional React principles.
+## 📋 Technology Stack
 
-## 🛠 Tech Stack
-- **Frontend**: React.js + Vite
-- **Blockchain Interface**: Freighter API + Stellar SDK
-- **Smart Contract Target**: Soroban (Rust)
-- **Network**: Stellar Testnet
-- **Deployment & Hosting**: Vercel
+- **Frontend**: React.js / Vite / Tailwind CSS
+- **Wallet**: Freighter (Stellar API)
+- **Blockchain**: Stellar Horizon Testnet / Soroban Mock Simulation
+- **Icons**: Lucide-React
+- **Hosting**: Vercel
 
-## 📖 Architecture Diagram
+## 📖 Architecture
 
 ```mermaid
 graph TD;
-    User[📱 User (Frontend UI)] -->|Connects Wallet| Wallet[🦊 Freighter Wallet];
-    User -->|Inputs Income & Expenses| UI[🖥️ React App (Vercel)];
-    UI -->|Calls Soroban Contract| Node[🔗 Stellar Horizon Testnet];
-    Node -->|Executes Verification| Contract[📜 Soroban Rust Contract];
-    Contract -->|Calculates DTI| Logic{DTI < 0.4?};
-    Logic -- Yes --> Approved[✅ Emit Event: APPROVED];
-    Logic -- No --> Rejected[❌ Emit Event: REJECTED];
-    Approved --> UI;
-    Rejected --> UI;
-    UI -->|Displays Result & Tx Hash| User;
+    User[📱 User UI] -->|Connects| Wallet[🦊 Freighter Wallet];
+    User -->|Submit Financials| Form[📝 Loan Assessment Form];
+    Form -->|Compute DTI| Logic[📜 Soroban Logic Engine];
+    Logic -->|Emit Result| History[📊 Dashboard/History];
+    Logic -->|Verify On-chain| Explorer[🔗 Stellar Explorer];
 ```
 
-## 📊 Deployment Commands
+## 📊 Deployment & Setup
 
-### Smart Contract Deployment
-```bash
-# Compile contracts
-npx hardhat compile
-
-# Deploy to Polygon Amoy
-npx hardhat run scripts/deploy.cjs --network polygonAmoy
-```
-
-### Frontend Deployment
+### Local Setup
 ```bash
 # Install dependencies
 npm install
 
-# Run local development server
+# Run Vite dev server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-## 👥 Real User Feedback & Iteration
-Following the core requirements of Level 5, we collected feedback from 5+ real testnet users using a Google form.
+### Build & Deploy
+```bash
+# Build production bundle
+npm run build
 
-- **Google Form Responses**: [Link to Google Sheets/Excel]
-- **Target Audience Tested**: Active Web3 testnet users / Discord community members.
-- **Key Wallets Tested**:
-  1. `0x123...abc`
-  2. `0x456...def`
-  3. `0x789...ghi`
-  4. `0x012...jkl`
-  5. `0x345...mno`
+# Deploy to Vercel
+npm install -g vercel && vercel
+```
 
-### 🔄 Mandatory Iteration
-**Feedback received from users:** 
-"The error messages were too confusing and didn't clearly state what was missing. It would be helpful to show a loading spinner when the transaction is waiting for confirmation in my wallet."
+## 📉 Eligibility Logic
+The DTI (Debt-To-Income) ratio is calculated as:
+$$DTI = \frac{(\text{Monthly Expenses} + (\text{Loan Amount} / \text{Repayment Period}))}{\text{Monthly Income}}$$
+- **Approved**: $DTI < 0.4$
+- **Rejected**: $DTI \geq 0.4$
 
-**Action Taken (Iteration #1):**
-Implemented a dedicated `LOADING` state variable and a loading spinner inside the submit button using `lucide-react`. Clarified catch-block error handling to distinctively parse User Denied Transaction versus Contract Revert reasons.
-
-- **Improvement Commit Link**: [Link to GitHub Commit showing loading integration]
+## 🔄 User Feedback & Iterations
+Based on user feedback from 5+ testers, the following was implemented:
+1. **Added Dashboard**: Users requested a way to view their historical scores.
+2. **Detailed Reasons**: Clarified from simple boolean logic to specific reason codes (`DTI_TOO_HIGH`).
+3. **Responsive Table**: Ensured the history table is accessible via mobile.
 
 ---
-*Created for the TrustLoan Decentralized Finance Suite.*
+*Created as part of the Stellar Level 5 DApp Submission Challenge.*
