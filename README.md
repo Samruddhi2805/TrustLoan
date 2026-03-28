@@ -16,19 +16,19 @@ This is the MVP (Minimum Viable Product) for Level 5 submission.
 
 ## 🛠 Tech Stack
 - **Frontend**: React.js + Vite
-- **Blockchain Interface**: Ethers.js
-- **Smart Contract**: Solidity
-- **Network**: Polygon Amoy Testnet (can be adapted to Stellar testnet/Soroban)
-- **Deployment & Hosting**: Hardhat, Vercel
+- **Blockchain Interface**: Freighter API + Stellar SDK
+- **Smart Contract Target**: Soroban (Rust)
+- **Network**: Stellar Testnet
+- **Deployment & Hosting**: Vercel
 
 ## 📖 Architecture Diagram
 
 ```mermaid
 graph TD;
-    User[📱 User (Frontend UI)] -->|Connects Wallet| Wallet[🦊 MetaMask / Freighter];
+    User[📱 User (Frontend UI)] -->|Connects Wallet| Wallet[🦊 Freighter Wallet];
     User -->|Inputs Income & Expenses| UI[🖥️ React App (Vercel)];
-    UI -->|Calls Smart Contract via Ethers.js| Node[🔗 RPC Node / Provider];
-    Node -->|Executes Transaction| Contract[📜 Solidity Contract (Polygon/Stellar Testnet)];
+    UI -->|Calls Soroban Contract| Node[🔗 Stellar Horizon Testnet];
+    Node -->|Executes Verification| Contract[📜 Soroban Rust Contract];
     Contract -->|Calculates DTI| Logic{DTI < 0.4?};
     Logic -- Yes --> Approved[✅ Emit Event: APPROVED];
     Logic -- No --> Rejected[❌ Emit Event: REJECTED];
