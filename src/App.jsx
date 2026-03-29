@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { isAllowed, setAllowed, getAddress, isConnected as checkFreighterConnected } from '@stellar/freighter-api';
+import { isAllowed, setAllowed, getAddress, isConnected as checkFreighterConnected, signTransaction } from '@stellar/freighter-api';
+import { Server, TransactionBuilder, Networks, Asset, Operation, Memo } from '@stellar/stellar-sdk';
 import Navbar from './components/Navbar';
 import FormCard from './components/FormCard';
 import ResultCard from './components/ResultCard';
@@ -45,19 +46,15 @@ function App() {
     setContract(null);
   };
 
-  const prepareMockContract = (publicKey) => {
+  const prepareStellarTransaction = (publicKey) => {
     return {
       checkEligibility: async (income, expenses, loanAmount, repaymentPeriod) => {
-        // DTI logic:
         const months = repaymentPeriod && parseFloat(repaymentPeriod) > 0 ? parseFloat(repaymentPeriod) : 12;
         const monthlyLoanRepayment = parseFloat(loanAmount) / months;
         const parsedIncome = parseFloat(income);
         const parsedExpenses = parseFloat(expenses);
         
         const dti = (parsedExpenses + monthlyLoanRepayment) / parsedIncome;
-        
-        // Wait 1.5 seconds for mock effect
-        await new Promise(r => setTimeout(r, 1500));
         
         const approved = dti < 0.4;
         let reason = "APPROVED";
@@ -67,24 +64,39 @@ function App() {
           reason = "DTI_TOO_HIGH";
         }
         
-        const mockHash = 'stellar_demo_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-        
-        return {
-          hash: mockHash,
-          wait: async () => ({
-            hash: mockHash,
-            logs: [{
-              topics: [
-                "0x" + stringToHex("EligibilityChecked"),
-                "0x" + stringToHex(publicKey),
-                "0x" + stringToHex(approved.toString()),
-                "0x" + stringToHex(reason)
-              ]
-            }]
-          }),
-          // Direct response access for demo ease
-          resultData: { approved, reason, dti: dti.toFixed(3) }
-        };
+        try {
+          const server = new Server('https://horizon-testnet.stellar.org');
+          const account = await server.loadAccount(publicKey);
+          
+          const memoStr = `DTI:${dti.toFixed(2)}|${approved ? 'APP' : 'REJ'}|${reason.substring(0,3)}`;
+
+          const transaction = new TransactionBuilder(account, {
+            fee: await server.fetchBaseFee(),
+            networkPassphrase: Networks.TESTNET
+          })
+          .addOperation(Operation.payment({
+            destination: publicKey, 
+            asset: Asset.native(),
+            amount: "0.0000001" 
+          }))
+          .addMemo(Memo.text(memoStr))
+          .setTimeout(30)
+          .build();
+
+          const signedTxStr = await signTransaction(transaction.toXDR(), { network: 'TESTNET' });
+          if (!signedTxStr) throw new Error("Transaction signing failed");
+
+          const signedTx = TransactionBuilder.fromXDR(signedTxStr, Networks.TESTNET);
+          const result = await server.submitTransaction(signedTx);
+          
+          return {
+            wait: async () => ({ hash: result.hash }),
+            resultData: { approved, reason, dti: dti.toFixed(3) }
+          };
+        } catch (error) {
+          console.error("Stellar Network Error:", error);
+          throw error;
+        }
       }
     };
   };
@@ -99,7 +111,7 @@ function App() {
           if (address && !error) {
             setAccount((prevAccount) => {
               if (prevAccount !== address) {
-                setContract(prepareMockContract(address));
+                setContract(prepareStellarTransaction(address));
               }
               return address;
             });
@@ -133,7 +145,7 @@ function App() {
 
       if (address) {
         setAccount(address);
-        setContract(prepareMockContract(address));
+        setContract(prepareStellarTransaction(address));
       }
     } catch (error) {
       console.error("Error connecting wallet:", error);
