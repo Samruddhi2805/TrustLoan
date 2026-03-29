@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { isAllowed, setAllowed, getAddress, isConnected as checkFreighterConnected, signTransaction } from '@stellar/freighter-api';
-import { Server, TransactionBuilder, Networks, Asset, Operation, Memo } from '@stellar/stellar-sdk';
+import { Horizon, TransactionBuilder, Networks, Asset, Operation, Memo } from '@stellar/stellar-sdk';
 import Navbar from './components/Navbar';
 import FormCard from './components/FormCard';
 import ResultCard from './components/ResultCard';
@@ -65,7 +65,7 @@ function App() {
         }
         
         try {
-          const server = new Server('https://horizon-testnet.stellar.org');
+          const server = new Horizon.Server('https://horizon-testnet.stellar.org');
           const account = await server.loadAccount(publicKey);
           
           const memoStr = `DTI:${dti.toFixed(2)}|${approved ? 'APP' : 'REJ'}|${reason.substring(0,3)}`;
@@ -83,10 +83,16 @@ function App() {
           .setTimeout(30)
           .build();
 
-          const signedTxStr = await signTransaction(transaction.toXDR(), { network: 'TESTNET' });
-          if (!signedTxStr) throw new Error("Transaction signing failed");
+          const response = await signTransaction(transaction.toXDR(), { networkPassphrase: Networks.TESTNET });
+          if (response.error) {
+            throw new Error(response.error);
+          }
+          if (!response.signedTxXdr) {
+            throw new Error("Transaction signing was cancelled or failed");
+          }
 
-          const signedTx = TransactionBuilder.fromXDR(signedTxStr, Networks.TESTNET);
+          // Rebuild signed tx and submit to network
+          const signedTx = TransactionBuilder.fromXDR(response.signedTxXdr, Networks.TESTNET);
           const result = await server.submitTransaction(signedTx);
           
           return {

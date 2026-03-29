@@ -23,9 +23,31 @@ export default function ResultCard({ result }) {
           {isApproved ? 'APPROVED' : 'REJECTED'}
         </h3>
         
-        <div className="text-gray-300 space-y-2">
-          <p className="font-semibold text-lg">Reason: <span className="text-white uppercase tracking-wider">{result.reason}</span></p>
-          <p>Calculated DTI: <span className="font-mono text-accent-cyan text-xl ml-2">{result.dti}</span></p>
+        <div className="text-gray-300 space-y-4 w-full px-4">
+          <div className="bg-white/5 p-4 rounded-xl border border-glass-border">
+            <p className="text-sm uppercase tracking-wider text-gray-400 font-semibold mb-1">Calculated DTI Score</p>
+            <p className="font-mono text-4xl font-bold text-accent-cyan">{result.dti}</p>
+          </div>
+
+          {!isApproved && (
+             <div className="bg-rose-500/10 p-5 rounded-xl border border-rose-500/20 text-rose-300 text-sm font-medium text-left">
+               <p className="flex items-center gap-2 font-bold mb-2">
+                 <XCircle className="w-4 h-4" /> Message:
+               </p>
+               {result.reason === 'DTI_TOO_HIGH' 
+                 ? "We couldn't approve your request because your Debt-to-Income (DTI) ratio exceeded the safe threshold of 0.40. To increase your chances, try requesting a smaller loan amount, extending the repayment period, or reducing monthly expenses."
+                 : "We couldn't evaluate your request due to invalid input metrics. Please ensure all values are positive numerical amounts."}
+             </div>
+          )}
+          
+          {isApproved && (
+             <div className="bg-emerald-500/10 p-5 rounded-xl border border-emerald-500/20 text-emerald-300 text-sm font-medium text-left">
+               <p className="flex items-center gap-2 font-bold mb-2">
+                 <CheckCircle className="w-4 h-4" /> Message:
+               </p>
+               Your calculated DTI profile meets our safe risk tolerance thresholds! Your eligibility status has been permanently recorded on-chain.
+             </div>
+          )}
         </div>
         
         <div className="w-full bg-black/40 rounded-xl p-5 mt-6 border border-glass-border/50">
