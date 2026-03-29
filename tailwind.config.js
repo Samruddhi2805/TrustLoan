@@ -7,25 +7,31 @@ export default {
   theme: {
     extend: {
       colors: {
-        navy: "#060612",
-        teal: {
-          400: "#0ff4c6",
-          500: "#0cd1aa"
-        },
-        violet: {
-          400: "#7b2ff7",
-          500: "#6021c7"
-        },
-        pink: {
-          400: "#f72585",
-          500: "#d31e73"
-        },
-        cyan: {
-          400: "#4cc9f0"
-        }
+        'navy-bg': '#060612',
+        'glass-bg': 'rgba(6, 6, 18, 0.7)',
+        'glass-border': 'rgba(255, 255, 255, 0.1)',
+        'accent-teal': '#0ff4c6',
+        'accent-violet': '#7b2ff7',
+        'accent-pink': '#f72585',
+        'accent-cyan': '#4cc9f0',
       },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+      animation: {
+        'float-slow': 'float 20s infinite ease-in-out',
+        'float-medium': 'float 15s infinite ease-in-out',
+        'float-fast': 'float 10s infinite ease-in-out',
+        'pulse-glow': 'pulseGlow 2s infinite',
+      },
+      keyframes: {
+        float: {
+          '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
+          '25%': { transform: 'translate(50px, -50px) scale(1.1)' },
+          '50%': { transform: 'translate(-30px, 30px) scale(0.9)' },
+          '75%': { transform: 'translate(30px, 50px) scale(1.05)' },
+        },
+        pulseGlow: {
+          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
+          '50%': { opacity: '0.6', transform: 'scale(1.2)' },
+        }
       }
     },
   },
