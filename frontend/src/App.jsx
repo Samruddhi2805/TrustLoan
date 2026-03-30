@@ -334,6 +334,14 @@ function App() {
               <svg className="w-6 h-6 z-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg>
               <span className="z-10 font-bold tracking-wide">Connect Wallet to Begin</span>
             </button>
+            <div className="mt-8 pt-6 border-t border-glass-border/30 w-full sm:hidden text-center">
+              <div className="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 text-amber-300 px-4 py-3 rounded-xl text-sm leading-relaxed max-w-sm">
+                <svg className="w-10 h-10 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p className="text-left font-medium">Hello there! The Freighter wallet extension currently only supports <b>Desktop browsers</b>. Please open this site on your computer to connect.</p>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="flex flex-col gap-10 mt-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
