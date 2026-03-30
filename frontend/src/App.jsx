@@ -6,11 +6,65 @@ import FormCard from './components/FormCard';
 import ResultCard from './components/ResultCard';
 import Dashboard from './components/Dashboard';
 
-const stringToHex = (str) => {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  return Array.from(data).map(b => b.toString(16).padStart(2, '0')).join('');
-};
+// ─── Core Financial Calculations ─────────────────────────────────────────────
+
+/**
+ * Standard EMI formula: [P × r × (1+r)^n] / [(1+r)^n – 1]
+ * @param {number} P - Principal (loan amount)
+ * @param {number} annualRate - Annual interest rate in %
+ * @param {number} n - Tenure in months
+ */
+export function calculateEMI(P, annualRate, n) {
+  if (P <= 0 || n <= 0) return 0;
+  const r = annualRate / 12 / 100;
+  if (r === 0) return P / n; // 0% interest edge case
+  return (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+}
+
+/**
+ * DTI = (Existing EMIs + New EMI) / Monthly Income
+ */
+export function calculateDTI(existingEMIs, newEMI, income) {
+  if (income <= 0) return Infinity;
+  return (existingEMIs + newEMI) / income;
+}
+
+/**
+ * Disposable Income = Income - Existing EMIs - New EMI
+ */
+export function calculateDisposable(income, existingEMIs, newEMI) {
+  return income - existingEMIs - newEMI;
+}
+
+/**
+ * Approval Logic:
+ *   APPROVE if DTI ≤ 0.50 AND Disposable Income ≥ 20% of Income
+ *   Otherwise REJECT
+ */
+export function evaluateEligibility(income, existingEMIs, newEMI) {
+  const dti = calculateDTI(existingEMIs, newEMI, income);
+  const disposable = calculateDisposable(income, existingEMIs, newEMI);
+  const minDisposable = income * 0.20;
+
+  const dtiOk = dti <= 0.50;
+  const disposableOk = disposable >= minDisposable;
+  const approved = dtiOk && disposableOk;
+
+  let reason;
+  if (approved) {
+    reason = 'APPROVED';
+  } else if (!dtiOk && !disposableOk) {
+    reason = 'DTI_AND_DISPOSABLE';
+  } else if (!dtiOk) {
+    reason = 'DTI_TOO_HIGH';
+  } else {
+    reason = 'LOW_DISPOSABLE';
+  }
+
+  return { approved, reason, dti, disposable };
+}
+
+// ─── App Component ────────────────────────────────────────────────────────────
 
 function App() {
   const [account, setAccount] = useState(null);
@@ -19,24 +73,19 @@ function App() {
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
-  
+
   const [formData, setFormData] = useState({
     income: '',
-    expenses: '',
+    existingEMIs: '',
     loanAmount: '',
-    repaymentPeriod: ''
+    interestRate: '12',
+    tenure: '12',
   });
 
   useEffect(() => {
     if (isManuallyDisconnected) return;
-    
     checkIfWalletIsConnected();
-
-    // Realtime polling for account changes or disconnects in Freighter
-    const intervalId = setInterval(() => {
-      checkIfWalletIsConnected(true);
-    }, 1500);
-    
+    const intervalId = setInterval(() => checkIfWalletIsConnected(true), 1500);
     return () => clearInterval(intervalId);
   }, [isManuallyDisconnected]);
 
@@ -46,66 +95,46 @@ function App() {
     setContract(null);
   };
 
-  const prepareStellarTransaction = (publicKey) => {
-    return {
-      checkEligibility: async (income, expenses, loanAmount, repaymentPeriod) => {
-        const months = repaymentPeriod && parseFloat(repaymentPeriod) > 0 ? parseFloat(repaymentPeriod) : 12;
-        const monthlyLoanRepayment = parseFloat(loanAmount) / months;
-        const parsedIncome = parseFloat(income);
-        const parsedExpenses = parseFloat(expenses);
-        
-        const dti = (parsedExpenses + monthlyLoanRepayment) / parsedIncome;
-        
-        const approved = dti < 0.4;
-        let reason = "APPROVED";
-        if (parsedIncome <= 0 || parsedExpenses < 0 || monthlyLoanRepayment <= 0) {
-          reason = "INVALID_INPUT";
-        } else if (!approved) {
-          reason = "DTI_TOO_HIGH";
-        }
-        
-        try {
-          const server = new Horizon.Server('https://horizon-testnet.stellar.org');
-          const account = await server.loadAccount(publicKey);
-          
-          const memoStr = `DTI:${dti.toFixed(2)}|${approved ? 'APP' : 'REJ'}|${reason.substring(0,3)}`;
+  const prepareStellarTransaction = (publicKey) => ({
+    checkEligibility: async (income, existingEMIs, loanAmount, interestRate, tenure) => {
+      const newEMI = calculateEMI(loanAmount, interestRate, tenure);
+      const { approved, reason, dti, disposable } = evaluateEligibility(income, existingEMIs, newEMI);
 
-          const transaction = new TransactionBuilder(account, {
-            fee: await server.fetchBaseFee(),
-            networkPassphrase: Networks.TESTNET
-          })
+      try {
+        const server = new Horizon.Server('https://horizon-testnet.stellar.org');
+        const accountData = await server.loadAccount(publicKey);
+
+        const memoStr = `DTI:${(dti * 100).toFixed(1)}%|${approved ? 'APP' : 'REJ'}`;
+        const transaction = new TransactionBuilder(accountData, {
+          fee: await server.fetchBaseFee(),
+          networkPassphrase: Networks.TESTNET,
+        })
           .addOperation(Operation.payment({
-            destination: publicKey, 
+            destination: publicKey,
             asset: Asset.native(),
-            amount: "0.0000001" 
+            amount: '0.0000001',
           }))
           .addMemo(Memo.text(memoStr))
           .setTimeout(30)
           .build();
 
-          const response = await signTransaction(transaction.toXDR(), { networkPassphrase: Networks.TESTNET });
-          if (response.error) {
-            throw new Error(response.error);
-          }
-          if (!response.signedTxXdr) {
-            throw new Error("Transaction signing was cancelled or failed");
-          }
+        const response = await signTransaction(transaction.toXDR(), { networkPassphrase: Networks.TESTNET });
+        if (response.error) throw new Error(response.error);
+        if (!response.signedTxXdr) throw new Error('Transaction signing was cancelled or failed');
 
-          // Rebuild signed tx and submit to network
-          const signedTx = TransactionBuilder.fromXDR(response.signedTxXdr, Networks.TESTNET);
-          const result = await server.submitTransaction(signedTx);
-          
-          return {
-            wait: async () => ({ hash: result.hash }),
-            resultData: { approved, reason, dti: dti.toFixed(3) }
-          };
-        } catch (error) {
-          console.error("Stellar Network Error:", error);
-          throw error;
-        }
+        const signedTx = TransactionBuilder.fromXDR(response.signedTxXdr, Networks.TESTNET);
+        const txResult = await server.submitTransaction(signedTx);
+
+        return {
+          wait: async () => ({ hash: txResult.hash }),
+          resultData: { approved, reason, dti, disposable, newEMI },
+        };
+      } catch (error) {
+        console.error('Stellar Network Error:', error);
+        throw error;
       }
-    };
-  };
+    },
+  });
 
   const checkIfWalletIsConnected = async (isPolling = false) => {
     try {
@@ -115,22 +144,15 @@ function App() {
         if (allowed) {
           const { address, error } = await getAddress();
           if (address && !error) {
-            setAccount((prevAccount) => {
-              if (prevAccount !== address) {
-                setContract(prepareStellarTransaction(address));
-              }
+            setAccount((prev) => {
+              if (prev !== address) setContract(prepareStellarTransaction(address));
               return address;
             });
             return;
           }
         }
       }
-
-      // If polling finishes and we aren't connected/allowed, clear the state
-      if (isPolling) {
-         setAccount(null);
-         setContract(null);
-      }
+      if (isPolling) { setAccount(null); setContract(null); }
     } catch (error) {
       if (!isPolling) console.log('Freighter issue:', error);
     }
@@ -141,75 +163,69 @@ function App() {
       setIsManuallyDisconnected(false);
       const connected = await checkFreighterConnected();
       if (!connected) {
-        alert('Freighter wallet not detected. Please install Freighter browser extension.');
+        alert('Freighter wallet not detected. Please install the Freighter browser extension.');
         return;
       }
-
       await setAllowed();
       const { address, error } = await getAddress();
       if (error) throw new Error(error);
-
       if (address) {
         setAccount(address);
         setContract(prepareStellarTransaction(address));
       }
     } catch (error) {
-      console.error("Error connecting wallet:", error);
+      console.error('Error connecting wallet:', error);
       alert('Error connecting wallet. Make sure Freighter is installed and unlocked.');
     }
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const checkEligibility = async (e) => {
     e.preventDefault();
-    
-    if (!contract) {
-      alert('Please connect your wallet first!');
-      return;
-    }
+    if (!contract) { alert('Please connect your wallet first!'); return; }
 
-    const { income, expenses, loanAmount, repaymentPeriod } = formData;
-    
-    if (!income || !expenses || !loanAmount) {
-      alert('Please fill in Income, Expenses, and Loan Amount!');
-      return;
-    }
+    const income = parseFloat(formData.income);
+    const existingEMIs = parseFloat(formData.existingEMIs) || 0;
+    const loanAmount = parseFloat(formData.loanAmount);
+    const interestRate = parseFloat(formData.interestRate) || 12;
+    const tenure = parseInt(formData.tenure, 10) || 12;
 
-    if (parseFloat(income) <= 0) {
-      alert('Income must be greater than 0!');
-      return;
-    }
+    if (!income || income <= 0) { alert('Monthly Income must be a positive number!'); return; }
+    if (existingEMIs < 0) { alert('Existing EMIs cannot be negative!'); return; }
+    if (!loanAmount || loanAmount <= 0) { alert('Desired Loan Amount must be a positive number!'); return; }
+    if (interestRate < 0) { alert('Interest rate cannot be negative!'); return; }
+    if (tenure <= 0) { alert('Loan tenure must be at least 1 month!'); return; }
 
     setLoading(true);
     setResult(null);
 
     try {
-      const tx = await contract.checkEligibility(income, expenses, loanAmount, repaymentPeriod);
+      const tx = await contract.checkEligibility(income, existingEMIs, loanAmount, interestRate, tenure);
       const receipt = await tx.wait();
-      
+
       const newResult = {
         approved: tx.resultData.approved,
         reason: tx.resultData.reason,
         txHash: receipt.hash,
-        income: income,
-        expenses: expenses,
-        loanAmount: loanAmount,
+        income,
+        existingEMIs,
+        loanAmount,
+        interestRate,
+        tenure,
+        newEMI: tx.resultData.newEMI,
         dti: tx.resultData.dti,
-        timestamp: Date.now()
+        disposable: tx.resultData.disposable,
+        timestamp: Date.now(),
       };
-      
-      setResult(newResult);
-      setHistory(prev => [newResult, ...prev]);
 
+      setResult(newResult);
+      setHistory((prev) => [newResult, ...prev]);
     } catch (error) {
-      console.error("Error checking eligibility:", error);
+      console.error('Error checking eligibility:', error);
       alert('Error checking eligibility! See console.');
     } finally {
       setLoading(false);
@@ -234,9 +250,9 @@ function App() {
               DeFi Loans Simplified
             </h1>
             <p className="text-lg sm:text-xl text-gray-300 mb-10 leading-relaxed font-light">
-              Connect your wallet to check your loan eligibility on-chain instantly using our precise Debt-to-Income algorithm.
+              Connect your wallet to check your loan eligibility on-chain instantly using real EMI &amp; DTI financial logic.
             </p>
-            <button 
+            <button
               onClick={connectWallet}
               className="btn-gradient text-lg px-8 py-5 flex items-center gap-3 w-max mx-auto shadow-lg hover:shadow-accent-teal/50 hover:-translate-y-1 transition duration-300 relative overflow-hidden group rounded-full"
             >
@@ -249,11 +265,11 @@ function App() {
           <div className="flex flex-col gap-10 mt-12 animate-in fade-in slide-in-from-bottom-8 duration-700">
             <div className="flex flex-col lg:flex-row gap-8 items-stretch justify-center max-w-6xl mx-auto w-full">
               <div className="w-full lg:w-1/2 flex">
-                <FormCard 
-                  formData={formData} 
-                  handleInputChange={handleInputChange} 
-                  checkEligibility={checkEligibility} 
-                  loading={loading} 
+                <FormCard
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                  checkEligibility={checkEligibility}
+                  loading={loading}
                 />
               </div>
               <div className="w-full lg:w-1/2 flex min-h-[400px]">
@@ -261,24 +277,23 @@ function App() {
                   <ResultCard result={result} />
                 ) : loading ? (
                   <div className="h-full w-full flex flex-col items-center justify-center glass-card p-12 flex-1 shadow-inner border border-glass-border/40 bg-black/40 backdrop-blur-sm">
-                     <span className="loading w-16 h-16 border-4 border-gray-600 border-t-accent-teal border-r-accent-cyan rounded-full animate-spin shadow-[0_0_30px_rgba(12,244,198,0.3)]"></span>
-                     <p className="mt-6 text-accent-cyan animate-[pulseGlow_2s_infinite] font-medium tracking-wider uppercase text-sm">Calculating via Smart Contract...</p>
+                    <span className="loading w-16 h-16 border-4 border-gray-600 border-t-accent-teal border-r-accent-cyan rounded-full animate-spin shadow-[0_0_30px_rgba(12,244,198,0.3)]"></span>
+                    <p className="mt-6 text-accent-cyan animate-[pulseGlow_2s_infinite] font-medium tracking-wider uppercase text-sm">Calculating via Smart Contract...</p>
                   </div>
                 ) : (
                   <div className="h-full w-full flex flex-col items-center justify-center glass-card p-12 border border-dashed border-gray-500/50 opacity-70 flex-1 hover:opacity-100 transition-opacity bg-black/20">
-                      <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
-                        <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                        </svg>
-                      </div>
-                      <p className="text-gray-300 text-center text-lg leading-relaxed max-w-sm">
-                          Submit the form to securely verify your loan eligibility and record it on the blockchain.
-                      </p>
+                    <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                      <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-300 text-center text-lg leading-relaxed max-w-sm">
+                      Fill in your financial details to securely verify your loan eligibility and record it on the blockchain.
+                    </p>
                   </div>
                 )}
               </div>
             </div>
-            
             <Dashboard account={account} history={history} />
           </div>
         )}
