@@ -59,7 +59,7 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
   const verdict = !preview ? null
     : preview.newEMI > parseFloat(formData.income || 0) ? { text: '⚠ EMI exceeds income — will be Rejected', cls: 'text-rose-400 bg-rose-500/10' }
     : preview.dti <= 0.55 && preview.disposablePct >= 20 ? { text: '✓ Likely APPROVED', cls: 'text-emerald-400 bg-emerald-500/10' }
-    : preview.dti <= 0.70 && preview.disposablePct >= 15 ? { text: '~ Likely CONDITIONAL APPROVAL', cls: 'text-amber-400 bg-amber-500/10' }
+    : preview.dti <= 0.70 && preview.disposablePct >= 15 ? { text: '~ You may qualify — bank will verify your details', cls: 'text-amber-400 bg-amber-500/10' }
     : { text: '✗ Likely REJECTED', cls: 'text-rose-400 bg-rose-500/10' };
 
   return (

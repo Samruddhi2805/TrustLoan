@@ -34,7 +34,7 @@ const STATUS_CONFIG = {
     textColor: 'text-amber-400',
     boxBg: 'bg-amber-500/10 border-amber-500/20',
     boxText: 'text-amber-300',
-    label: 'CONDITIONAL APPROVAL',
+    label: 'YOU MAY QUALIFY',
   },
   REJECT: {
     icon: <XCircle className="w-10 h-10 text-rose-400" />,
@@ -114,7 +114,9 @@ export default function ResultCard({ result }) {
             {result.status === 'APPROVE' && <CheckCircle className="w-4 h-4" />}
             {result.status === 'CONDITIONAL' && <AlertCircle className="w-4 h-4" />}
             {result.status === 'REJECT' && <XCircle className="w-4 h-4" />}
-            Decision Reason
+            {result.status === 'APPROVE' ? 'Why you were approved' :
+             result.status === 'CONDITIONAL' ? 'What this means for you' :
+             'Why you were not approved'}
           </p>
           <p className="leading-relaxed">
             {result.reason === 'EMI_EXCEEDS_INCOME'

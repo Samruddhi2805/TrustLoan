@@ -10,14 +10,11 @@ import Dashboard from './components/Dashboard';
 
 /**
  * Standard EMI formula: [P × r × (1+r)^n] / [(1+r)^n – 1]
- * @param {number} P - Principal (loan amount)
- * @param {number} annualRate - Annual interest rate in %
- * @param {number} n - Tenure in months
  */
 export function calculateEMI(P, annualRate, n) {
   if (P <= 0 || n <= 0) return 0;
   const r = annualRate / 12 / 100;
-  if (r === 0) return P / n; // 0% interest edge case
+  if (r === 0) return P / n;
   return (P * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
 }
 
@@ -30,30 +27,47 @@ export function calculateDTI(existingEMIs, newEMI, income) {
 }
 
 /**
- *   APPROVE if DTI ≤ 0.50 AND Disposable Income ≥ 20% of Income
- *   Otherwise REJECT
+ * Disposable % = (Income – Existing EMIs – New EMI) / Income × 100
+ */
+export function calculateDisposablePct(income, existingEMIs, newEMI) {
+  if (income <= 0) return 0;
+  return ((income - existingEMIs - newEMI) / income) * 100;
+}
+
+/**
+ * 3-Tier Decision Logic:
+ *   IF EMI > Income → REJECT
+ *   ELSE IF DTI ≤ 0.55 AND Disposable% ≥ 20% → APPROVE
+ *   ELSE IF DTI ≤ 0.70 AND Disposable% ≥ 15% → CONDITIONAL
+ *   ELSE → REJECT
  */
 export function evaluateEligibility(income, existingEMIs, newEMI) {
   const dti = calculateDTI(existingEMIs, newEMI, income);
-  const disposable = calculateDisposable(income, existingEMIs, newEMI);
-  const minDisposable = income * 0.20;
+  const disposablePct = calculateDisposablePct(income, existingEMIs, newEMI);
 
-  const dtiOk = dti <= 0.50;
-  const disposableOk = disposable >= minDisposable;
-  const approved = dtiOk && disposableOk;
+  let status, reason;
 
-  let reason;
-  if (approved) {
-    reason = 'APPROVED';
-  } else if (!dtiOk && !disposableOk) {
-    reason = 'DTI_AND_DISPOSABLE';
-  } else if (!dtiOk) {
-    reason = 'DTI_TOO_HIGH';
+  if (newEMI > income) {
+    status = 'REJECT';
+    reason = 'EMI_EXCEEDS_INCOME';
+  } else if (dti <= 0.55 && disposablePct >= 20) {
+    status = 'APPROVE';
+    reason = `Approved because DTI is ${(dti * 100).toFixed(0)}% and disposable income is ${disposablePct.toFixed(0)}%`;
+  } else if (dti <= 0.70 && disposablePct >= 15) {
+    status = 'CONDITIONAL';
+    reason = `Good news — your profile looks possible! Your DTI is ${(dti * 100).toFixed(0)}% and you'd have ${disposablePct.toFixed(0)}% of your income left after EMIs. A bank may approve this after verifying your documents or salary slips.`;
   } else {
-    reason = 'LOW_DISPOSABLE';
+    status = 'REJECT';
+    if (dti > 0.70 && disposablePct < 15) {
+      reason = `Rejected because DTI is ${(dti * 100).toFixed(0)}% (max 70%) and disposable income is only ${disposablePct.toFixed(0)}% (min 15%).`;
+    } else if (dti > 0.70) {
+      reason = `Rejected because DTI is ${(dti * 100).toFixed(0)}%, which exceeds the maximum allowed limit of 70%.`;
+    } else {
+      reason = `Rejected because disposable income is only ${disposablePct.toFixed(0)}%, which is below the minimum required 15%.`;
+    }
   }
 
-  return { approved, reason, dti, disposable };
+  return { status, reason, dti, disposablePct };
 }
 
 // ─── App Component ────────────────────────────────────────────────────────────
