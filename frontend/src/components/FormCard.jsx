@@ -11,7 +11,7 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
         <form onSubmit={checkEligibility} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">
-              Monthly Income ($)
+              Monthly Income (₹)
             </label>
             <input
               type="number"
@@ -28,7 +28,7 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
           
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">
-              Monthly Expenses ($)
+              Monthly Expenses (₹)
             </label>
             <input
               type="number"
@@ -45,7 +45,7 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
 
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-2 uppercase tracking-wider">
-              Desired Loan Amount ($)
+              Desired Loan Amount (₹)
             </label>
             <input
               type="number"
