@@ -70,21 +70,21 @@ export function evaluateEligibility(income, existingEMIs, newEMI) {
   return { status, reason, dti, disposablePct };
 }
 
-// ─── Active Users Tracker (Cross-Device via CountAPI) ────────────────────────
-const COUNTER_NAMESPACE = 'trustloan-lite-stellar';
-const COUNTER_KEY = 'active-wallets-v1';
+// ─── Active Users Tracker (Cross-Device via CounterAPI) ────────────────────────
+const COUNTER_NAMESPACE = 'trustloan_lite';
+const COUNTER_KEY = 'active_users';
 
 // Get the current shared count from the API
 async function fetchSharedUserCount() {
   try {
-    const res = await fetch(`https://api.countapi.xyz/get/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
+    const res = await fetch(`https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
     if (!res.ok) throw new Error();
     const data = await res.json();
-    return data.value ?? 0;
+    return data.count ?? 0;
   } catch {
     // fallback to localStorage count
     try {
-      const stored = localStorage.getItem('tl_active_wallets');
+      const stored = localStorage.getItem('tl_seen_wallets');
       return stored ? JSON.parse(stored).length : 0;
     } catch { return 0; }
   }
@@ -112,7 +112,7 @@ async function registerActiveUser(address) {
   if (!isNewWallet(address)) return; // already counted on this device
   markWalletSeen(address);
   try {
-    await fetch(`https://api.countapi.xyz/hit/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
+    await fetch(`https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/up`);
   } catch {}
 }
 
