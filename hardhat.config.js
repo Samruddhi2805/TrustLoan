@@ -12,6 +12,12 @@ export default {
       }
     }
   },
+  paths: {
+    sources: "./contract/contracts",
+    tests: "./contract/test",
+    artifacts: "./contract/artifacts",
+    cache: "./contract/cache"
+  },
   networks: {
     polygonTestnet: {
       url: "https://rpc-mumbai.maticvigil.com",
