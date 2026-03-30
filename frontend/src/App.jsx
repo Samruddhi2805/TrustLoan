@@ -207,7 +207,13 @@ function App() {
           const { address, error } = await getAddress();
           if (address && !error) {
             setAccount((prev) => {
-              if (prev !== address) setContract(prepareStellarTransaction(address));
+              if (prev !== address) {
+                setContract(prepareStellarTransaction(address));
+                // If they automatically connected on page load, register them
+                registerActiveUser(address).then(() => {
+                  fetchSharedUserCount().then(setActiveUserCount);
+                });
+              }
               return address;
             });
             return;
