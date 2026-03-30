@@ -72,7 +72,7 @@ export function evaluateEligibility(income, existingEMIs, newEMI) {
 
 // ─── Active Users Tracker (Cross-Device via CounterAPI) ────────────────────────
 const COUNTER_NAMESPACE = 'trustloan_lite';
-const COUNTER_KEY = 'active_users';
+const COUNTER_KEY = 'active_users_v2';
 
 // Get the current shared count from the API
 async function fetchSharedUserCount() {
@@ -84,7 +84,7 @@ async function fetchSharedUserCount() {
   } catch {
     // fallback to localStorage count
     try {
-      const stored = localStorage.getItem('tl_seen_wallets');
+      const stored = localStorage.getItem('tl_seen_wallets_v2');
       return stored ? JSON.parse(stored).length : 0;
     } catch { return 0; }
   }
@@ -93,16 +93,16 @@ async function fetchSharedUserCount() {
 // Check if this wallet has been counted before (localStorage per-device dedup)
 function isNewWallet(address) {
   try {
-    const seen = JSON.parse(localStorage.getItem('tl_seen_wallets') || '[]');
+    const seen = JSON.parse(localStorage.getItem('tl_seen_wallets_v2') || '[]');
     return !seen.includes(address);
   } catch { return true; }
 }
 
 function markWalletSeen(address) {
   try {
-    const seen = JSON.parse(localStorage.getItem('tl_seen_wallets') || '[]');
+    const seen = JSON.parse(localStorage.getItem('tl_seen_wallets_v2') || '[]');
     if (!seen.includes(address)) {
-      localStorage.setItem('tl_seen_wallets', JSON.stringify([...seen, address]));
+      localStorage.setItem('tl_seen_wallets_v2', JSON.stringify([...seen, address]));
     }
   } catch {}
 }
