@@ -1,63 +1,78 @@
 import React from 'react';
-import { CheckCircle, XCircle, ExternalLink } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, ExternalLink } from 'lucide-react';
 
 function fmt(n) {
   return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n);
 }
 
-function StatRow({ label, value, sub }) {
+function StatRow({ label, value, badge }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-glass-border/30 last:border-none">
       <span className="text-sm text-gray-400">{label}</span>
-      <span className="text-right">
+      <span className="flex items-center gap-2">
         <span className="font-mono font-bold text-white text-sm">{value}</span>
-        {sub && <span className="ml-1 text-xs text-gray-500">{sub}</span>}
+        {badge && <span className="text-xs text-gray-500">{badge}</span>}
       </span>
     </div>
   );
 }
 
-function getRejectionMessage(reason) {
-  switch (reason) {
-    case 'DTI_TOO_HIGH':
-      return "Your Debt-to-Income (DTI) ratio exceeds the 50% threshold. Try requesting a smaller loan, extending the tenure, or reducing existing debt obligations.";
-    case 'LOW_DISPOSABLE':
-      return "Your disposable income after all loan obligations would fall below 20% of your monthly income — the minimum required to cover living expenses.";
-    case 'DTI_AND_DISPOSABLE':
-      return "Both your DTI ratio is too high and disposable income is insufficient. Consider reducing the loan amount or paying off existing EMIs first.";
-    default:
-      return "We couldn't evaluate your request due to invalid input values. Please ensure all fields contain valid positive amounts.";
-  }
-}
+const STATUS_CONFIG = {
+  APPROVE: {
+    icon: <CheckCircle className="w-10 h-10 text-emerald-400" />,
+    bg: 'bg-emerald-500/20',
+    border: 'border-t-emerald-500',
+    textColor: 'text-emerald-400',
+    boxBg: 'bg-emerald-500/10 border-emerald-500/20',
+    boxText: 'text-emerald-300',
+    label: 'APPROVED',
+  },
+  CONDITIONAL: {
+    icon: <AlertCircle className="w-10 h-10 text-amber-400" />,
+    bg: 'bg-amber-500/20',
+    border: 'border-t-amber-500',
+    textColor: 'text-amber-400',
+    boxBg: 'bg-amber-500/10 border-amber-500/20',
+    boxText: 'text-amber-300',
+    label: 'CONDITIONAL APPROVAL',
+  },
+  REJECT: {
+    icon: <XCircle className="w-10 h-10 text-rose-400" />,
+    bg: 'bg-rose-500/20',
+    border: 'border-t-rose-500',
+    textColor: 'text-rose-400',
+    boxBg: 'bg-rose-500/10 border-rose-500/20',
+    boxText: 'text-rose-300',
+    label: 'REJECTED',
+  },
+};
 
 export default function ResultCard({ result }) {
   if (!result) return null;
 
-  const isApproved = result.approved;
-  const dtiPercent = (result.dti * 100).toFixed(1);
-  const minDisposable = result.income * 0.2;
+  const cfg = STATUS_CONFIG[result.status] || STATUS_CONFIG.REJECT;
+  const dtiPct = (result.dti * 100).toFixed(1);
+  const dispPct = result.disposablePct?.toFixed(1) ?? '—';
 
   const dtiColor =
-    result.dti <= 0.4 ? 'text-emerald-400' :
-    result.dti <= 0.5 ? 'text-amber-400' : 'text-rose-400';
+    result.dti <= 0.55 ? 'text-emerald-400' :
+    result.dti <= 0.70 ? 'text-amber-400' : 'text-rose-400';
+
+  const dispColor =
+    result.disposablePct >= 20 ? 'text-emerald-400' :
+    result.disposablePct >= 15 ? 'text-amber-400' : 'text-rose-400';
 
   return (
-    <div className={`glass-card p-8 h-full w-full border-t-4 shadow-2xl ${isApproved ? 'border-t-emerald-500' : 'border-t-rose-500'}`}>
+    <div className={`glass-card p-8 h-full w-full border-t-4 shadow-2xl ${cfg.border}`}>
       <div className="flex flex-col h-full space-y-5">
 
         {/* Status Header */}
         <div className="flex flex-col items-center text-center space-y-3">
-          {isApproved ? (
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center animate-[pulseGlow_2s_infinite]">
-              <CheckCircle className="w-10 h-10 text-emerald-500" />
-            </div>
-          ) : (
-            <div className="w-16 h-16 rounded-full bg-rose-500/20 flex items-center justify-center">
-              <XCircle className="w-10 h-10 text-rose-500" />
-            </div>
-          )}
-          <h3 className={`text-3xl font-extrabold tracking-tight ${isApproved ? 'text-emerald-400' : 'text-rose-400'}`}>
-            {isApproved ? 'APPROVED' : 'REJECTED'}
+          <div className={`w-16 h-16 rounded-full ${cfg.bg} flex items-center justify-center ${result.status === 'APPROVE' ? 'animate-[pulseGlow_2s_infinite]' : ''}`}>
+            {cfg.icon}
+          </div>
+          <h3 className={`text-2xl font-extrabold tracking-tight ${cfg.textColor}`}>
+            {cfg.label}
           </h3>
         </div>
 
@@ -66,41 +81,33 @@ export default function ResultCard({ result }) {
           <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">Calculation Breakdown</p>
           <StatRow label="Monthly Income" value={`₹${fmt(result.income)}`} />
           <StatRow label="Existing EMIs" value={`₹${fmt(result.existingEMIs)}`} />
-          <StatRow label="New EMI" value={`₹${fmt(result.newEMI)}`} sub={`@ ${result.interestRate}% for ${result.tenure}mo`} />
+          <StatRow label="New EMI" value={`₹${fmt(result.newEMI)}`} badge={`@ ${result.interestRate}% / ${result.tenure}mo`} />
           <StatRow
             label="DTI Ratio"
-            value={
-              <span className={dtiColor}>{dtiPercent}%</span>
-            }
-            sub="threshold: ≤ 50%"
+            value={<span className={dtiColor}>{dtiPct}%</span>}
+            badge="threshold: ≤55% | ≤70%"
           />
           <StatRow
             label="Disposable Income"
-            value={
-              <span className={result.disposable >= minDisposable ? 'text-emerald-400' : 'text-rose-400'}>
-                ₹{fmt(result.disposable)}
-              </span>
-            }
-            sub={`min: ₹${fmt(minDisposable)}`}
+            value={<span className={dispColor}>{dispPct}%</span>}
+            badge="threshold: ≥20% | ≥15%"
           />
         </div>
 
         {/* Decision Reason */}
-        {isApproved ? (
-          <div className="bg-emerald-500/10 p-4 rounded-xl border border-emerald-500/20 text-emerald-300 text-sm">
-            <p className="flex items-center gap-2 font-bold mb-1">
-              <CheckCircle className="w-4 h-4" /> Why Approved
-            </p>
-            Your DTI ratio of <strong>{dtiPercent}%</strong> is within the safe limit (≤ 50%) and your disposable income of <strong>₹{fmt(result.disposable)}</strong> covers the required 20% minimum (₹{fmt(minDisposable)}). Your eligibility has been recorded on-chain.
-          </div>
-        ) : (
-          <div className="bg-rose-500/10 p-4 rounded-xl border border-rose-500/20 text-rose-300 text-sm">
-            <p className="flex items-center gap-2 font-bold mb-1">
-              <XCircle className="w-4 h-4" /> Why Rejected
-            </p>
-            {getRejectionMessage(result.reason)}
-          </div>
-        )}
+        <div className={`p-4 rounded-xl border ${cfg.boxBg} ${cfg.boxText} text-sm`}>
+          <p className="flex items-center gap-2 font-bold mb-2">
+            {result.status === 'APPROVE' && <CheckCircle className="w-4 h-4" />}
+            {result.status === 'CONDITIONAL' && <AlertCircle className="w-4 h-4" />}
+            {result.status === 'REJECT' && <XCircle className="w-4 h-4" />}
+            Decision Reason
+          </p>
+          <p className="leading-relaxed">
+            {result.reason === 'EMI_EXCEEDS_INCOME'
+              ? `Rejected — the calculated EMI of ₹${fmt(result.newEMI)} exceeds your monthly income of ₹${fmt(result.income)}. This loan is not serviceable.`
+              : result.reason}
+          </p>
+        </div>
 
         {/* Transaction Hash */}
         <div className="w-full bg-black/40 rounded-xl p-4 border border-glass-border/50 mt-auto">
@@ -110,8 +117,7 @@ export default function ResultCard({ result }) {
           </p>
           <a
             href={`https://stellar.expert/explorer/testnet/tx/${result.txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
+            target="_blank" rel="noopener noreferrer"
             className="mt-3 flex items-center justify-center gap-2 text-sm text-accent-cyan hover:text-accent-teal transition-colors font-medium"
           >
             <span>View on Stellar Explorer</span>

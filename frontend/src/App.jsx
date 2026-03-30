@@ -30,14 +30,6 @@ export function calculateDTI(existingEMIs, newEMI, income) {
 }
 
 /**
- * Disposable Income = Income - Existing EMIs - New EMI
- */
-export function calculateDisposable(income, existingEMIs, newEMI) {
-  return income - existingEMIs - newEMI;
-}
-
-/**
- * Approval Logic:
  *   APPROVE if DTI ≤ 0.50 AND Disposable Income ≥ 20% of Income
  *   Otherwise REJECT
  */
@@ -98,13 +90,13 @@ function App() {
   const prepareStellarTransaction = (publicKey) => ({
     checkEligibility: async (income, existingEMIs, loanAmount, interestRate, tenure) => {
       const newEMI = calculateEMI(loanAmount, interestRate, tenure);
-      const { approved, reason, dti, disposable } = evaluateEligibility(income, existingEMIs, newEMI);
+      const { status, reason, dti, disposablePct } = evaluateEligibility(income, existingEMIs, newEMI);
 
       try {
         const server = new Horizon.Server('https://horizon-testnet.stellar.org');
         const accountData = await server.loadAccount(publicKey);
 
-        const memoStr = `DTI:${(dti * 100).toFixed(1)}%|${approved ? 'APP' : 'REJ'}`;
+        const memoStr = `DTI:${(dti * 100).toFixed(1)}%|${status}`;
         const transaction = new TransactionBuilder(accountData, {
           fee: await server.fetchBaseFee(),
           networkPassphrase: Networks.TESTNET,
@@ -127,7 +119,7 @@ function App() {
 
         return {
           wait: async () => ({ hash: txResult.hash }),
-          resultData: { approved, reason, dti, disposable, newEMI },
+          resultData: { status, reason, dti, disposablePct, newEMI },
         };
       } catch (error) {
         console.error('Stellar Network Error:', error);
@@ -208,7 +200,7 @@ function App() {
       const receipt = await tx.wait();
 
       const newResult = {
-        approved: tx.resultData.approved,
+        status: tx.resultData.status,
         reason: tx.resultData.reason,
         txHash: receipt.hash,
         income,
@@ -218,7 +210,7 @@ function App() {
         tenure,
         newEMI: tx.resultData.newEMI,
         dti: tx.resultData.dti,
-        disposable: tx.resultData.disposable,
+        disposablePct: tx.resultData.disposablePct,
         timestamp: Date.now(),
       };
 
