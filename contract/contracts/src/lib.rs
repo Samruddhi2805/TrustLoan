@@ -51,10 +51,13 @@ impl TrustLoanLiteStellar {
         // Calculate DTI (Debt-to-Income ratio)
         // Using scaled integer arithmetic (multiply by 10000 for 4 decimal places)
         let dti_scaled = (expenses * 10000) / income;
-        let dti_threshold_scaled = 4000; // 0.4 * 10000
+        let p40 = 4000; // 0.4 * 10000
+        let p50 = 5000; // 0.5 * 10000
 
-        let (approved, reason) = if dti_scaled < dti_threshold_scaled {
+        let (approved, reason) = if dti_scaled < p40 {
             (true, "APPROVED".to_string())
+        } else if dti_scaled <= p50 {
+            (false, "We couldn't approve your request. Your current debt obligations are relatively high.".to_string())
         } else {
             (false, "DTI_TOO_HIGH".to_string())
         };
