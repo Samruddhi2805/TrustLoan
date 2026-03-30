@@ -127,9 +127,12 @@ function App() {
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const [activeUserCount, setActiveUserCount] = useState(0);
 
-  // Fetch shared user count on mount
+  // Fetch shared user count on mount and poll every 10s for real-time updates
   useEffect(() => {
-    fetchSharedUserCount().then(count => setActiveUserCount(count));
+    const updateCount = () => fetchSharedUserCount().then(count => setActiveUserCount(count));
+    updateCount();
+    const countInterval = setInterval(updateCount, 10000);
+    return () => clearInterval(countInterval);
   }, []);
 
   const [formData, setFormData] = useState({

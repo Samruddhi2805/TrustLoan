@@ -29,7 +29,7 @@ export default function Navbar({ account, connectWallet, disconnectWallet, activ
         <span className="text-sm text-gray-300 font-medium">
           <span className="font-bold text-accent-teal">{activeUserCount}</span>
           <span className="ml-1 hidden sm:inline text-gray-500">
-            {activeUserCount === 1 ? 'user connected' : 'users connected'}
+            {activeUserCount === 1 ? 'active user' : 'active users'}
           </span>
         </span>
       </div>
