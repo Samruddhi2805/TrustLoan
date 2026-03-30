@@ -3,10 +3,10 @@
 A decentralized financial application generating on-chain verified Debt-to-Income (DTI) ratings, leveraging the speed and transparency of the **Stellar Network**.
 
 ## Live Links
-- **Live Demo Site**: `[Insert your deployed Vercel/Netlify link here]`
-- **Demo Video**: `[Insert YouTube/Loom demo video link here]`
-- **User Feedback Excel Sheet**: `https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing`
-- **User Google Form (For testing)**: `https://forms.gle/RnorBqa3w2jFYK3t5`
+- **Live Demo Site**: **https://trust-loan-coral.vercel.app/**
+- **Demo Video**: **https://drive.google.com/file/d/1uPCFjFkYDXmpp1UngbamDE06R1cnmol6/view?usp=sharing**
+- **User Feedback Excel Sheet**: **https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing**
+- **User Google Form (For testing)**: **https://forms.gle/RnorBqa3w2jFYK3t5**
 
 ---
 
