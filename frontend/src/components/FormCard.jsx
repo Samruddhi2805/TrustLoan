@@ -63,7 +63,7 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
     : { text: '✗ Likely REJECTED', cls: 'text-rose-400 bg-rose-500/10' };
 
   return (
-    <div className="glass-card p-8 w-full relative group shadow-2xl">
+    <div className="glass-card p-5 sm:p-8 w-full relative group shadow-2xl">
       <div className="relative bg-glass-bg rounded-2xl">
         <h2 className="text-2xl font-bold text-center mb-1 bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
           Check Eligibility
@@ -108,7 +108,7 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
           />
 
           {/* Interest Rate + Tenure */}
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <label htmlFor="interestRate" className="block text-sm font-medium text-gray-400 mb-1 uppercase tracking-wider">
                 Interest Rate (%)

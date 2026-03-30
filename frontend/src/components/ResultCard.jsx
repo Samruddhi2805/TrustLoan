@@ -63,7 +63,7 @@ export default function ResultCard({ result }) {
     result.disposablePct >= 15 ? 'text-amber-400' : 'text-rose-400';
 
   return (
-    <div className={`glass-card p-8 h-full w-full border-t-4 shadow-2xl ${cfg.border}`}>
+    <div className={`glass-card p-5 sm:p-8 h-full w-full border-t-4 shadow-2xl ${cfg.border}`}>
       <div className="flex flex-col h-full space-y-5">
 
         {/* Status Header */}
