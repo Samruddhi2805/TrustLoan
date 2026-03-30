@@ -70,6 +70,23 @@ export function evaluateEligibility(income, existingEMIs, newEMI) {
   return { status, reason, dti, disposablePct };
 }
 
+// ─── Active Users Tracker (localStorage) ─────────────────────────────────────
+function getActiveUsers() {
+  try {
+    const stored = localStorage.getItem('tl_active_wallets');
+    return stored ? JSON.parse(stored) : [];
+  } catch { return []; }
+}
+
+function registerActiveUser(address) {
+  try {
+    const existing = getActiveUsers();
+    if (!existing.includes(address)) {
+      localStorage.setItem('tl_active_wallets', JSON.stringify([...existing, address]));
+    }
+  } catch {}
+}
+
 // ─── App Component ────────────────────────────────────────────────────────────
 
 function App() {
@@ -79,6 +96,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
+  const [activeUserCount, setActiveUserCount] = useState(getActiveUsers().length);
 
   const [formData, setFormData] = useState({
     income: '',
@@ -179,6 +197,8 @@ function App() {
       if (address) {
         setAccount(address);
         setContract(prepareStellarTransaction(address));
+        registerActiveUser(address);
+        setActiveUserCount(getActiveUsers().length);
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
@@ -251,7 +271,7 @@ function App() {
         <div className="aurora-blob blob-3"></div>
       </div>
 
-      <Navbar account={account} connectWallet={connectWallet} disconnectWallet={disconnectWallet} />
+      <Navbar account={account} connectWallet={connectWallet} disconnectWallet={disconnectWallet} activeUserCount={activeUserCount} />
 
       <main className="max-w-7xl mx-auto pt-24 pb-24 relative z-10 w-full">
         {!account ? (
