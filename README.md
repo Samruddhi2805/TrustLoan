@@ -5,7 +5,7 @@ A decentralized financial application generating on-chain verified Debt-to-Incom
 ## Live Links
 - **Live Demo Site**: `[Insert your deployed Vercel/Netlify link here]`
 - **Demo Video**: `[Insert YouTube/Loom demo video link here]`
-- **User Feedback Excel Sheet**: `(https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing)`
+- **User Feedback Excel Sheet**: `https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing`
 - **User Google Form (For testing)**: `https://forms.gle/RnorBqa3w2jFYK3t5`
 
 ---
