@@ -81,6 +81,9 @@ export default function ResultCard({ result }) {
           <p className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">Calculation Breakdown</p>
           <StatRow label="Monthly Income" value={`₹${fmt(result.income)}`} />
           <StatRow label="Existing EMIs" value={`₹${fmt(result.existingEMIs)}`} />
+          {result.monthlyExpenses > 0 && (
+            <StatRow label="Monthly Expenses" value={`₹${fmt(result.monthlyExpenses)}`} badge="(informational)" />
+          )}
           <StatRow label="New EMI" value={`₹${fmt(result.newEMI)}`} badge={`@ ${result.interestRate}% / ${result.tenure}mo`} />
           <StatRow
             label="DTI Ratio"
@@ -92,6 +95,17 @@ export default function ResultCard({ result }) {
             value={<span className={dispColor}>{dispPct}%</span>}
             badge="threshold: ≥20% | ≥15%"
           />
+          {result.monthlyExpenses > 0 && (
+            <StatRow
+              label="Net Cash After All"
+              value={
+                <span className={(result.income - result.existingEMIs - result.newEMI - result.monthlyExpenses) >= 0 ? 'text-blue-300' : 'text-rose-400'}>
+                  ₹{fmt(result.income - result.existingEMIs - result.newEMI - result.monthlyExpenses)}
+                </span>
+              }
+              badge="income − EMIs − expenses"
+            />
+          )}
         </div>
 
         {/* Decision Reason */}

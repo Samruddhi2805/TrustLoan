@@ -69,6 +69,7 @@ function App() {
   const [formData, setFormData] = useState({
     income: '',
     existingEMIs: '',
+    monthlyExpenses: '',
     loanAmount: '',
     interestRate: '12',
     tenure: '12',
@@ -182,12 +183,14 @@ function App() {
 
     const income = parseFloat(formData.income);
     const existingEMIs = parseFloat(formData.existingEMIs) || 0;
+    const monthlyExpenses = parseFloat(formData.monthlyExpenses) || 0;
     const loanAmount = parseFloat(formData.loanAmount);
     const interestRate = parseFloat(formData.interestRate) || 12;
     const tenure = parseInt(formData.tenure, 10) || 12;
 
     if (!income || income <= 0) { alert('Monthly Income must be a positive number!'); return; }
     if (existingEMIs < 0) { alert('Existing EMIs cannot be negative!'); return; }
+    if (monthlyExpenses < 0) { alert('Monthly Expenses cannot be negative!'); return; }
     if (!loanAmount || loanAmount <= 0) { alert('Desired Loan Amount must be a positive number!'); return; }
     if (interestRate < 0) { alert('Interest rate cannot be negative!'); return; }
     if (tenure <= 0) { alert('Loan tenure must be at least 1 month!'); return; }
@@ -205,6 +208,7 @@ function App() {
         txHash: receipt.hash,
         income,
         existingEMIs,
+        monthlyExpenses,
         loanAmount,
         interestRate,
         tenure,
