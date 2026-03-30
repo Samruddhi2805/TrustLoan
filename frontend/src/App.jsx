@@ -70,20 +70,49 @@ export function evaluateEligibility(income, existingEMIs, newEMI) {
   return { status, reason, dti, disposablePct };
 }
 
-// ─── Active Users Tracker (localStorage) ─────────────────────────────────────
-function getActiveUsers() {
+// ─── Active Users Tracker (Cross-Device via CountAPI) ────────────────────────
+const COUNTER_NAMESPACE = 'trustloan-lite-stellar';
+const COUNTER_KEY = 'active-wallets-v1';
+
+// Get the current shared count from the API
+async function fetchSharedUserCount() {
   try {
-    const stored = localStorage.getItem('tl_active_wallets');
-    return stored ? JSON.parse(stored) : [];
-  } catch { return []; }
+    const res = await fetch(`https://api.countapi.xyz/get/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    return data.value ?? 0;
+  } catch {
+    // fallback to localStorage count
+    try {
+      const stored = localStorage.getItem('tl_active_wallets');
+      return stored ? JSON.parse(stored).length : 0;
+    } catch { return 0; }
+  }
 }
 
-function registerActiveUser(address) {
+// Check if this wallet has been counted before (localStorage per-device dedup)
+function isNewWallet(address) {
   try {
-    const existing = getActiveUsers();
-    if (!existing.includes(address)) {
-      localStorage.setItem('tl_active_wallets', JSON.stringify([...existing, address]));
+    const seen = JSON.parse(localStorage.getItem('tl_seen_wallets') || '[]');
+    return !seen.includes(address);
+  } catch { return true; }
+}
+
+function markWalletSeen(address) {
+  try {
+    const seen = JSON.parse(localStorage.getItem('tl_seen_wallets') || '[]');
+    if (!seen.includes(address)) {
+      localStorage.setItem('tl_seen_wallets', JSON.stringify([...seen, address]));
     }
+  } catch {}
+}
+
+// Increment shared counter + mark wallet seen locally
+async function registerActiveUser(address) {
+  if (!isNewWallet(address)) return; // already counted on this device
+  markWalletSeen(address);
+  try {
+    await fetch(`https://api.countapi.xyz/hit/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
   } catch {}
 }
 
@@ -96,7 +125,12 @@ function App() {
   const [result, setResult] = useState(null);
   const [history, setHistory] = useState([]);
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
-  const [activeUserCount, setActiveUserCount] = useState(getActiveUsers().length);
+  const [activeUserCount, setActiveUserCount] = useState(0);
+
+  // Fetch shared user count on mount
+  useEffect(() => {
+    fetchSharedUserCount().then(count => setActiveUserCount(count));
+  }, []);
 
   const [formData, setFormData] = useState({
     income: '',
@@ -197,8 +231,9 @@ function App() {
       if (address) {
         setAccount(address);
         setContract(prepareStellarTransaction(address));
-        registerActiveUser(address);
-        setActiveUserCount(getActiveUsers().length);
+        await registerActiveUser(address);           // register in shared counter
+        const count = await fetchSharedUserCount();  // fetch updated shared count
+        setActiveUserCount(count);
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
