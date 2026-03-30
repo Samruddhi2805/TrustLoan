@@ -94,7 +94,7 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
             <input
               type="number" id="monthlyExpenses" name="monthlyExpenses"
               value={formData.monthlyExpenses} onChange={handleInputChange}
-              placeholder="e.g. 25000 (optional)" className="glass-input" min="0"
+              placeholder="e.g. 25000" className="glass-input" min="0"
             />
             <p className="text-xs text-gray-600 mt-1 pl-1">
               ℹ️ Used for your net take-home estimate. <em>Not included in DTI calculation.</em>
