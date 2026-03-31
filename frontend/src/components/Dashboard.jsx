@@ -48,43 +48,40 @@ export default function Dashboard({ account, history }) {
   useEffect(() => {
     if (!account) return;
 
-    const fetchIndexer = async () => {
+    const fetchUserHistory = async () => {
       setIndexingActive(true);
-      
-      // FETCH 1: Connected User's direct history from Horizon ONLY
-      const userHistoryUrl = `https://horizon-testnet.stellar.org/accounts/${account}/payments?limit=30&order=desc`;
-      
       try {
-        const userRes = await fetch(userHistoryUrl);
-        const userData = userRes.ok ? await userRes.json() : { _embedded: { records: [] } };
-
-        // Handle User Indexer
-        const userRecords = userData._embedded.records || [];
-        const userTxPromises = userRecords.map(r => fetch(r._links.transaction.href).then(res => res.json()).catch(() => null));
-        const userTxs = await Promise.all(userTxPromises);
-        
-        const userFormatted = userTxs
-          .filter(tx => tx && tx.memo_type === 'text' && tx.memo && tx.memo.startsWith('DTI:'))
-          .map(tx => {
-            const [dtiPart, status] = tx.memo.split('|');
-            return {
-              hash: tx.hash,
-              timestamp: tx.created_at,
-              dti: dtiPart.replace('DTI:', ''),
-              status,
-            };
-          });
-        setIndexedData(userFormatted);
+        const { Client } = await import('trustloan');
+        const dbClient = new Client({
+          networkPassphrase: "Test SDF Network ; September 2015",
+          contractId: "CDOLUZMCCZODFA43Z4SJWKGOBBLUCGTDBRAMAKSWKNCZP6KLOF6TLTWB",
+          rpcUrl: "https://soroban-testnet.stellar.org:443"
+        });
+        // Pull this wallet's full evaluation history directly from the Rust DB
+        const histRes = await dbClient.get_history({ user: account });
+        const records = histRes.result || [];
+        // Map LoanEvaluation struct fields to display format
+        const formatted = records.map(ev => ({
+          dti: (Number(ev.dti_pct_scaled) / 100).toFixed(2),
+          disposable: (Number(ev.disposable_pct_scaled) / 100).toFixed(2),
+          advice: ev.advice?.tag ?? 'Unknown',
+          timestamp: Number(ev.timestamp) * 1000, // convert Unix seconds → ms
+          ledger: ev.ledger_sequence,
+          income: ev.income,
+          existing_emis: ev.existing_emis,
+          new_emi: ev.new_emi,
+        })).reverse(); // newest first
+        setIndexedData(formatted);
       } catch (err) {
-        console.error("Indexing failed", err);
+        console.error("Soroban DB history fetch failed:", err);
       } finally {
         setIndexingActive(false);
       }
     };
 
-    fetchIndexer();
-    const indexInterval = setInterval(fetchIndexer, 15000);
-    return () => clearInterval(indexInterval);
+    fetchUserHistory();
+    const interval = setInterval(fetchUserHistory, 15000);
+    return () => clearInterval(interval);
   }, [account]);
 
   if (!account) return null;
@@ -239,18 +236,21 @@ export default function Dashboard({ account, history }) {
         </div>
         
         {indexedData.length === 0 ? (
-          <div className="p-12 text-center text-gray-400">
-            <p className="text-lg">No indexed DTI records found on the blockchain.</p>
+          <div className="p-12 text-center text-gray-400 flex flex-col items-center gap-3">
+            <Database className="w-10 h-10 text-gray-600" />
+            <p className="text-lg">No on-chain records found for this wallet.</p>
+            <p className="text-sm text-gray-500">Submit a loan eligibility check above to write your first record to the Soroban DB.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-black/40 text-gray-400 text-xs uppercase tracking-wider">
-                  <th className="p-4 rounded-tl-lg font-semibold">Verified Timestamp</th>
-                  <th className="p-4 font-semibold">Indexed DTI</th>
-                  <th className="p-4 font-semibold">Status</th>
-                  <th className="p-4 rounded-tr-lg font-semibold">Stellar Tx</th>
+                  <th className="p-4 rounded-tl-lg font-semibold">Timestamp (On-Chain)</th>
+                  <th className="p-4 font-semibold">DTI Ratio</th>
+                  <th className="p-4 font-semibold">Disposable %</th>
+                  <th className="p-4 font-semibold">Advice</th>
+                  <th className="p-4 rounded-tr-lg font-semibold">Ledger</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-glass-border/30">
@@ -259,27 +259,38 @@ export default function Dashboard({ account, history }) {
                     <td className="p-4 text-sm text-gray-300">
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-gray-500" />
-                        {new Date(item.timestamp).toLocaleString()}
+                        {new Date(item.timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </td>
                     <td className="p-4 font-mono text-sm">
-                      <span className="bg-black/30 px-2 py-1 rounded border border-accent-cyan/30 text-accent-cyan">{item.dti}</span>
+                      <span className="bg-black/30 px-2 py-1 rounded border border-accent-cyan/30 text-accent-cyan">{item.dti}%</span>
+                    </td>
+                    <td className="p-4 font-mono text-sm">
+                      <span className="bg-black/30 px-2 py-1 rounded border border-accent-violet/30 text-accent-violet">{item.disposable}%</span>
                     </td>
                     <td className="p-4 text-xs font-bold uppercase tracking-wider">
-                      {item.status.includes('APPROVE') ? (
-                        <span className="text-emerald-400">{item.status}</span>
+                      {item.advice === 'Safe' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <CheckCircle className="w-3 h-3" /> Safe
+                        </span>
+                      ) : item.advice === 'Caution' ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          ⚠ Caution
+                        </span>
                       ) : (
-                        <span className="text-rose-400">{item.status}</span>
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                          <XCircle className="w-3 h-3" /> Do Not Take
+                        </span>
                       )}
                     </td>
                     <td className="p-4 text-xs font-mono text-gray-400">
-                      <a 
-                         href={`https://stellar.expert/explorer/testnet/tx/${item.hash}`}
-                         target="_blank"
-                         rel="noopener noreferrer"
-                         className="hover:text-accent-teal transition-colors flex items-center gap-1 px-2 py-1 bg-white/5 rounded w-max"
+                      <a
+                        href={`https://stellar.expert/explorer/testnet/ledger/${item.ledger}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-accent-teal transition-colors flex items-center gap-1 px-2 py-1 bg-white/5 rounded w-max"
                       >
-                        {item.hash.slice(0, 8)}...{item.hash.slice(-8)}
+                        #{item.ledger}
                         <ExternalLink className="w-3 h-3" />
                       </a>
                     </td>
