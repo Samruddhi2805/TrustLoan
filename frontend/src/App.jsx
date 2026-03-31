@@ -170,29 +170,35 @@ function App() {
 
   const prepareStellarTransaction = (publicKey) => ({
     checkEligibility: async (income, existingEMIs, loanAmount, interestRate, tenure) => {
+      // 1. Math computation for visual display
       const newEMI = calculateEMI(loanAmount, interestRate, tenure);
       const { status, reason, dti, disposablePct } = evaluateEligibility(income, existingEMIs, newEMI);
 
       try {
-        const server = new Horizon.Server('https://horizon-testnet.stellar.org');
-        const accountData = await server.loadAccount(publicKey);
+        // 2. Import Soroban SDK Bindings (dynamically to avoid React hydration issues)
+        const { Client } = await import('trustloan');
+        const client = new Client({
+            networkPassphrase: Networks.TESTNET,
+            contractId: "CDHFNL5UFCQXIAMMJMEJNOHVDBQIUSE3MQ6EKQMVXNVHKQ3JYVMD7CQA",
+            rpcUrl: "https://soroban-testnet.stellar.org:443",
+            publicKey: publicKey
+        });
 
-        const memoStr = `DTI:${(dti * 100).toFixed(1)}%|${status}`;
-        const innerTx = new TransactionBuilder(accountData, {
-          fee: '100',
-          networkPassphrase: Networks.TESTNET,
-        })
-          .addOperation(Operation.payment({
-            destination: publicKey,
-            asset: Asset.native(),
-            amount: '0.0000001',
-          }))
-          .addMemo(Memo.text(memoStr))
-          .setTimeout(60)
-          .build();
+        // 3. Assemble the Soroban transaction natively
+        // Simulate contract via RPC to fetch resource fees
+        const txResponse = await client.evaluate({
+            user: publicKey,
+            income: Math.floor(income),
+            existing_emis: Math.floor(existingEMIs),
+            new_emi: Math.floor(newEMI),
+            expenses: Math.floor(formData.monthlyExpenses || 0),
+            employment: { tag: "Salaried", values: undefined } 
+        });
 
-        // User signs the inner transaction
-        const response = await signTransaction(innerTx.toXDR(), { networkPassphrase: Networks.TESTNET });
+        const txBuilt = await txResponse.built;
+
+        // User signs the Soroban execution footprint
+        const response = await signTransaction(txBuilt.toXDR(), { networkPassphrase: Networks.TESTNET });
         if (response.error) throw new Error(response.error);
         if (!response.signedTxXdr) throw new Error('Transaction signing was cancelled or failed');
 
@@ -201,15 +207,12 @@ function App() {
         let txToSubmit = signedInnerTx;
         let gasless = false;
 
-        // ── Advanced Feature: Fee Bump (Gasless) ──────────────────────────
-        // If fee sponsorship is available, wrap the user's signed inner tx
-        // in a Fee Bump envelope and sign with sponsor keypair.
-        // The sponsor pays all network fees — user pays ZERO.
+        // Advanced Feature: Fee Bump (Gasless) wraps the Soroban payload
         if (useFeeBump && FEE_SPONSOR_KEYPAIR) {
           try {
             const feeBumpTx = TransactionBuilder.buildFeeBumpTransaction(
               FEE_SPONSOR_KEYPAIR,
-              '1000', // fee per operation paid by sponsor
+              '20000', // Soroban execution fees require a higher fee bump
               signedInnerTx,
               Networks.TESTNET
             );
@@ -221,8 +224,8 @@ function App() {
             txToSubmit = signedInnerTx;
           }
         }
-        // ── End Advanced Feature ──────────────────────────────────────────
 
+        const server = new Horizon.Server('https://horizon-testnet.stellar.org');
         const txResult = await server.submitTransaction(txToSubmit);
 
         return {
