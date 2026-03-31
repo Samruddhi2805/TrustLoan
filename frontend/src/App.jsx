@@ -318,23 +318,6 @@ function App() {
       const tx = await contract.checkEligibility(income, existingEMIs, loanAmount, interestRate, tenure);
       const receipt = await tx.wait();
 
-      // Send to Persistent Backend (MongoDB)
-      try {
-        await fetch('/api/analyze-loan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            user_id: account,
-            income,
-            existingEMI: existingEMIs,
-            newEMI: tx.resultData.newEMI,
-            expenses: monthlyExpenses
-          })
-        });
-      } catch (apiError) {
-        console.error('API Storage Error:', apiError);
-      }
-
       const newResult = {
         status: tx.resultData.status,
         reason: tx.resultData.reason,
