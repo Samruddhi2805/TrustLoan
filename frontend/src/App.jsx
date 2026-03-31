@@ -88,7 +88,7 @@ const FEE_SPONSOR_ADDRESS = FEE_SPONSOR_KEYPAIR ? FEE_SPONSOR_KEYPAIR.publicKey(
 // Get the current shared count from the API
 async function fetchSharedUserCount() {
   try {
-    const res = await fetch(`https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
+    const res = await fetch(`https://corsproxy.io/?https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
     if (!res.ok) throw new Error();
     const data = await res.json();
     return data.count ?? 0;
@@ -123,7 +123,7 @@ async function registerActiveUser(address) {
   if (!isNewWallet(address)) return; // already counted on this device
   markWalletSeen(address);
   try {
-    await fetch(`https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/up`);
+    await fetch(`https://corsproxy.io/?https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/up`);
   } catch {}
 }
 
