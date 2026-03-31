@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "prebuild": "cd src/contracts/trustloan && npm install && npm run build",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
