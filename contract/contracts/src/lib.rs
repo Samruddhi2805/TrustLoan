@@ -56,6 +56,7 @@ pub struct LoanEvaluation {
 // Storage key names
 const HISTORY_MAP: soroban_sdk::Symbol = symbol_short!("HIST_MAP");
 const TX_COUNT: soroban_sdk::Symbol = symbol_short!("TX_CNT");
+const USER_COUNT: soroban_sdk::Symbol = symbol_short!("USER_CNT");
 
 // ─── Contract ─────────────────────────────────────────────────────────────────
 
@@ -65,17 +66,6 @@ pub struct TrustLoanSafety;
 #[contractimpl]
 impl TrustLoanSafety {
     /// Evaluate loan safety and persist the result on-chain.
-    ///
-    /// All monetary values are whole rupee amounts (u64).
-    /// Interest rate and tenure are handled off-chain (EMI pre-calculated).
-    ///
-    /// # Arguments
-    /// * `user`          — caller's Stellar address (must authorise)
-    /// * `income`        — monthly income in ₹
-    /// * `existing_emis` — sum of current monthly EMI obligations in ₹
-    /// * `new_emi`       — proposed new loan's monthly EMI in ₹
-    /// * `expenses`      — essential monthly expenses (rent, food, bills) in ₹
-    /// * `employment`    — Salaried or SelfEmployed (affects buffer threshold)
     pub fn evaluate(
         env: Env,
         user: Address,
@@ -94,16 +84,11 @@ impl TrustLoanSafety {
 
         // 3. Core metric calculations (integer arithmetic, no f64)
         let total_emis: u64 = existing_emis.saturating_add(new_emi);
-
-        // DTI % scaled: (total_emis / income) * 10000
-        // e.g. income=75000, emis=30000 → 30000*10000/75000 = 4000 = 40.00%
         let dti_pct_scaled: u64 = total_emis.saturating_mul(10_000) / income;
 
         // Disposable income = income - emis - expenses
         let outgo: u64 = total_emis.saturating_add(expenses);
         let disposable_income: i64 = income as i64 - outgo as i64;
-
-        // Disposable % scaled: (disposable / income) * 10000 [signed]
         let disposable_pct_scaled: i64 = (disposable_income * 10_000) / income as i64;
 
         // 4. Stress simulation: 20% income drop
@@ -116,24 +101,19 @@ impl TrustLoanSafety {
         let stress_disposable: i64 = stress_income as i64 - outgo as i64;
 
         // 5. Safety decision — strict 3-tier rules
-        // Self-employed users need a higher buffer (35% vs 30%)
         let safe_disp_threshold: i64 = match employment {
             EmploymentType::SelfEmployed => 3_500, // 35.00%
             EmploymentType::Salaried     => 3_000, // 30.00%
         };
 
         let advice = if dti_pct_scaled > 5_000 || disposable_pct_scaled < 1_000 {
-            // DTI > 50% OR disposable < 10%
             Advice::DoNotTake
         } else if dti_pct_scaled < 3_000 && disposable_pct_scaled >= safe_disp_threshold {
-            // DTI < 30% AND disposable > threshold
             Advice::Safe
         } else {
-            // Everything in between
             Advice::Caution
         };
 
-        // 6. Assemble result
         let evaluation = LoanEvaluation {
             user: user.clone(),
             timestamp: env.ledger().timestamp(),
@@ -152,7 +132,7 @@ impl TrustLoanSafety {
             advice,
         };
 
-        // 7. Persistent per-user history using Map<Address, Vec<LoanEvaluation>>
+        // 7. Persistent per-user history
         let mut history_map: Map<Address, Vec<LoanEvaluation>> = env
             .storage()
             .persistent()
@@ -163,6 +143,9 @@ impl TrustLoanSafety {
             .get(user.clone())
             .unwrap_or(Vec::new(&env));
 
+        // Track computationally if this is their first evaluation
+        let is_new_user = user_history.is_empty();
+
         user_history.push_back(evaluation.clone());
         history_map.set(user.clone(), user_history);
 
@@ -171,13 +154,15 @@ impl TrustLoanSafety {
             .persistent()
             .extend_ttl(&HISTORY_MAP, LEDGER_BUMP, LEDGER_BUMP);
 
-        // 8. Global transaction counter
+        // 8. Global database counters
         let count: u64 = env.storage().instance().get(&TX_COUNT).unwrap_or(0u64);
         env.storage().instance().set(&TX_COUNT, &(count + 1));
 
-        // 9. Emit on-chain event (indexable via Horizon event stream)
-        // topic: ("loan_eval", advice_u32)
-        // value: (dti_pct_scaled, disposable_pct_scaled)
+        if is_new_user {
+             let unique_users: u64 = env.storage().instance().get(&USER_COUNT).unwrap_or(0u64);
+             env.storage().instance().set(&USER_COUNT, &(unique_users + 1));
+        }
+
         let advice_u32: u32 = match advice {
             Advice::Safe      => 0,
             Advice::Caution   => 1,
@@ -191,7 +176,6 @@ impl TrustLoanSafety {
         evaluation
     }
 
-    /// Return the last N evaluations for a given user.
     pub fn get_history(env: Env, user: Address) -> Vec<LoanEvaluation> {
         let history_map: Map<Address, Vec<LoanEvaluation>> = env
             .storage()
@@ -202,9 +186,13 @@ impl TrustLoanSafety {
         history_map.get(user).unwrap_or(Vec::new(&env))
     }
 
-    /// Return total evaluations processed by the contract (all users).
     pub fn get_tx_count(env: Env) -> u64 {
         env.storage().instance().get(&TX_COUNT).unwrap_or(0u64)
+    }
+
+    /// Read the total number of mathematically unique wallets (active users) from the database
+    pub fn get_user_count(env: Env) -> u64 {
+        env.storage().instance().get(&USER_COUNT).unwrap_or(0u64)
     }
 
     /// Pure DTI utility — call via simulation (no auth, no state change).

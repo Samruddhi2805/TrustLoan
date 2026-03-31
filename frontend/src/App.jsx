@@ -179,7 +179,7 @@ function App() {
         const { Client } = await import('trustloan');
         const client = new Client({
             networkPassphrase: Networks.TESTNET,
-            contractId: "CDHFNL5UFCQXIAMMJMEJNOHVDBQIUSE3MQ6EKQMVXNVHKQ3JYVMD7CQA",
+            contractId: "CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX",
             rpcUrl: "https://soroban-testnet.stellar.org:443",
             publicKey: publicKey
         });

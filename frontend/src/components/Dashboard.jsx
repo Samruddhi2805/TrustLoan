@@ -1,11 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { History, BarChart3, Clock, CheckCircle, XCircle, ExternalLink, Database, Search, Users, Activity, Globe } from 'lucide-react';
 
-export default function Dashboard({ account, history, activeUserCount }) {
+export default function Dashboard({ account, history }) {
   const [indexedData, setIndexedData] = useState([]);
   const [indexingActive, setIndexingActive] = useState(false);
 
+  // Directly fetch global user metrics from the Blockchain Database Core
+  const [activeUsersFromDB, setActiveUsersFromDB] = useState(0);
+  const [txCountFromDB, setTxCountFromDB] = useState(0);
+
   const [globalActivity, setGlobalActivity] = useState([]);
+
+  useEffect(() => {
+    async function fetchDatabaseMetrics() {
+      try {
+        const { Client } = await import('trustloan');
+        const dbClient = new Client({
+            networkPassphrase: "Test SDF Network ; September 2015",
+            contractId: "CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX",
+            rpcUrl: "https://soroban-testnet.stellar.org:443"
+        });
+
+        // Query the Rust Database directly
+        const userRes = await dbClient.get_user_count();
+        setActiveUsersFromDB(Number(userRes.result || 0));
+        
+        const txRes = await dbClient.get_tx_count();
+        setTxCountFromDB(Number(txRes.result || 0));
+      } catch (err) {
+        console.error("Rust DB Fetch Error:", err);
+      }
+    }
+    fetchDatabaseMetrics();
+  }, []);
 
   useEffect(() => {
     if (!account) return;
@@ -14,7 +41,7 @@ export default function Dashboard({ account, history, activeUserCount }) {
     // FETCH 1: Connected User's direct history from Horizon
     const userHistoryUrl = `https://horizon-testnet.stellar.org/accounts/${account}/payments?limit=30&order=desc`;
     
-    // FETCH 2: Global Platform Sponsor activity (shows all "Gasless" users)
+    // FETCH 2: Global Platform Sponsor activity
     const SPONSOR_ACCOUNT = 'GDSVLBKLH3YMOGCW6SLBF4QX7H5Q2HMCWNTFL3NDIBQU2EP43QANVF5J';
     const globalSourceUrl = `https://horizon-testnet.stellar.org/accounts/${SPONSOR_ACCOUNT}/payments?limit=30&order=desc`;
 
@@ -41,7 +68,7 @@ export default function Dashboard({ account, history, activeUserCount }) {
           });
         setIndexedData(userFormatted);
 
-        // Handle Global Platform Indexer
+        // Handle Global Platform Indexer directly from Blockchain DB traces
         const globalRecords = globalData._embedded.records;
         const globalTxPromises = globalRecords.map(r => fetch(r._links.transaction.href).then(res => res.json()).catch(() => null));
         const globalTxs = await Promise.all(globalTxPromises);
@@ -54,41 +81,7 @@ export default function Dashboard({ account, history, activeUserCount }) {
              source: tx.source_account
           }));
 
-        // Integrating the confirmed REAL Level 6 Expanded Users (Verified on Testnet)
-        const verifiedLevel6Users = [
-          "GCMZW5W343PPWOP5KU4XEWQKRG4ENF3WPWYL4ZPNCGIIYFEI5FNZOBLD", "GB2T2AYG2KZ6GYBOMZ34TZZVYR7JYKUKECMUYUINXMWSQSAZP4AALM27",
-          "GC6H42IJTML2AESFGADISD5IDRDFBO2V6FM2RGDKTH3NOXIGZJD6EO4Q", "GBISALVK3BPAST5NZEWROXLQNCTUFPOJOKEBZ7TD3LQAJJOOCPATM4JS",
-          "GBAMGKHW66YJDDGKURUC5LC4MHAUT6LHZERIFIDJLIVRH47WIGSSEOFC", "GDMLZBQEDVRR756GGHOESBWTDRVGPH52TXTM3MD6SSJUNEYGC4OUJLKA",
-          "GBHB27TJFIJFEDLBGNWCBKKJWXSVLQ3FMGT2ABKHV22MDLTGPR7KBZ4Q", "GBNXL5GIBV3UM5JAOBVFFCM5TN4DS6NVR7WB3CNP3HBC6N2TFR6SVDCX",
-          "GDGNRGBI5WPBDBIKQB42RA3VQFD7OJURNJCNVDEQWSFBJPHE5TNHDLRE", "GA3XZOHIWEJ23NFROS7KOWFW7CMM2SW57YWZHNF4YO6U7CBKSGF23JWB",
-          "GA3JMRB3PA4P6JORQ67ATGU5EQZWYF576RL55KMPKLLV5CPPOQ3I7HJL", "GA6A3HCABTLQIT2MBYH4KKVYOD4Z54RSRO7QIUA6YRMIKUW3GKL6K745",
-          "GAJEU53WUBG3FQ44MJFUAYSHMYM62BAYJWW4PILXETW2AGZBUUBKJNZH", "GCMSECZZWQBTMCWBYOFOUCDCQKLIL3PPRXXIB7B3IDK7PTPZVC56QNGA",
-          "GAHHBABVGP6ZGX5NXSGABEESIFJSWY5VRGKB4BZDADT2OA35JCNRT3EA", "GBZA2AXCBDXUDGXPNYR7SP7FXUP7MYYJQYAW4DDUDGVDG5QUQO6SQZV2",
-          "GDQBEXC5COEKW7RURVJ5WM2ZMV4B33B25BCWFVMQBWM47SPEJ5EJIXJD", "GB7KZ6XN3LQU6FKPV6TQPCCL7OZUG6EKOOPZEC5O6M3425C4HAARHTFH",
-          "GDWC5DRLZFIWEORN3SDPLURDSYN2ZXSZ4AR4Y5BKX4H3WXNK3SHFLJ76", "GA7VNA4KU52PFT3VE6CVVDFKN7BKNGSJA2VYO3SUMEOTO5Y4APNBXZ5P",
-          "GBPMUOF64J5CO236ZLK5Z66EJPMF2C34HXRPFAX47PIMFHBTQ4AMIZ2H", "GBE3UMRCHR3H5LDZAKVGEFRKVFRW3IIXJ73FDBWXC5NW5EWOZIHFOTVM",
-          "GARGMVXAXV4MNS4WUX6WCUYVEGE7NQBQZYJRANFDTPRB47CR6FDPS5O3", "GAS2KNCJ7VUG3EYCCLKPORXM6IXEOGTVQIDLKF3SLQR7RWQMMJA5ACNW",
-          "GCKLCUYXOXHVALJR5WOBLUVGU3LA7JXR3FDLSHKCOA7C4HZAOBJEFXPP", "GB6ZDJAFF2HZZAFPTD377QXP4JKG6U73QQDQWRH7F3AV3YT7IFS2IXWH",
-          "GAPGHEONHR7AP2NS5FEBVKNSSHGFMLELS425ATYXNFOPFDU7Y7MWTLNB", "GDTC3G3WNW7WEPK34EVVYQXYLZT6XPB4EUQGMVDSGWNBPIWLTOMT576C",
-          "GDHYP2K3CPDOKUIEKGVKJLLWPEDO3OHCEVAJDQ2VTKH5HTE5GA2637GZ", "GA5WHJE4XA56ELYHXSFY4HULPW6TULZE3U5VA4MTNWZ7KLOTNWQ2BFKS"
-        ];
-        
-        const historicalSeededActivity = verifiedLevel6Users.map(address => ({
-            hash: "Verified Historical User",
-            timestamp: new Date().toISOString(), // Fallback timeline for UI consistency
-            source: address
-        }));
-        
-        // Merge real-time horizon data with valid historical addresses without duplicating
-        const combinedActivity = [...globalFormatted];
-        historicalSeededActivity.forEach(hist => {
-            if (!combinedActivity.find(a => a.source === hist.source)) {
-                combinedActivity.push(hist);
-            }
-        });
-
-        setGlobalActivity(combinedActivity);
-
+        setGlobalActivity(globalFormatted);
         setIndexingActive(false);
       })
       .catch(err => {
@@ -144,15 +137,15 @@ export default function Dashboard({ account, history, activeUserCount }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-glass-border/30 bg-black/10">
           <div className="p-6 text-center">
             <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">Total Active Users</h4>
-            <p className="text-4xl font-bold text-white">{activeUserCount}</p>
+            <p className="text-4xl font-bold text-white">{activeUsersFromDB}</p>
           </div>
           <div className="p-6 text-center">
             <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">Platform Transactions</h4>
-            <p className="text-4xl font-bold text-accent-cyan">{activeUserCount * 3}</p>
+            <p className="text-4xl font-bold text-accent-cyan">{txCountFromDB}</p>
           </div>
           <div className="p-6 text-center">
-            <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">30x Retention Rate</h4>
-            <p className="text-4xl font-bold text-emerald-400">82.4%</p>
+            <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">Database Sync</h4>
+            <p className="text-4xl font-bold text-emerald-400">Soroban</p>
           </div>
         </div>
       </div>
