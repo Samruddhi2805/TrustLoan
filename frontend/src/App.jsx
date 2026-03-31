@@ -247,9 +247,6 @@ function App() {
       if (address) {
         setAccount(address);
         setContract(prepareStellarTransaction(address));
-        await registerActiveUser(address);           // register in shared counter
-        const count = await fetchSharedUserCount();  // fetch updated shared count
-        setActiveUserCount(count);
       }
     } catch (error) {
       console.error('Error connecting wallet:', error);
