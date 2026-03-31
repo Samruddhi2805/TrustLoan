@@ -11,7 +11,7 @@ A decentralized financial application that generates on-chain verified Debt-to-I
 | Resource | Link |
 |----------|------|
 | 🌐 **Live Demo** | **[trust-loan-coral.vercel.app](https://trust-loan-coral.vercel.app/)** |
-| 🎬 **Demo Video** | **[Google Drive](https://drive.google.com/file/d/1uPCFjFkYDXmpp1UngbamDE06R1cnmol6/view?usp=sharing)** |
+| 🎬 **Demo Video** | **[Google Drive](https://drive.google.com/file/d/1q2luizj0_P_c3enPNEW2A1Nei1kilues/view?usp=sharing)** |
 | 📊 **User Feedback Sheet** | **[Google Sheets](https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing)** |
 | 📝 **User Google Form** | **[forms.gle/RnorBqa3w2jFYK3t5](https://forms.gle/RnorBqa3w2jFYK3t5)** |
 | 🔒 **Security Checklist** | **[SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md)** |
