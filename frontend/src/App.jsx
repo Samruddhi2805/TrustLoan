@@ -79,7 +79,7 @@ const COUNTER_KEY = 'active_users_v2';
 // A platform-managed sponsor account funds all transaction fees.
 // Users connect with Freighter and sign only their DTI check — the platform
 // wraps it in a Fee Bump envelope so users pay ZERO XLM in network fees.
-const FEE_SPONSOR_SECRET = 'SCZANGBA5AAAA7VWBST3CF6QRKZBR3C53AMJHKFFRM4CQVQK2TRNRFR'; // Testnet-only demo sponsor
+const FEE_SPONSOR_SECRET = 'SAHIRBIVDDCJT2QUFEMEI6ZAIZXEKOZPF43Z2AEHP4GQXJ4NHRTIVX5L'; // Testnet demo sponsor
 const FEE_SPONSOR_KEYPAIR = (() => {
   try { return Keypair.fromSecret(FEE_SPONSOR_SECRET); } catch { return null; }
 })();

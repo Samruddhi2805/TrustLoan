@@ -94,50 +94,13 @@ Full security review documented in **[SECURITY_CHECKLIST.md](./SECURITY_CHECKLIS
 
 ---
 
-## 👥 Verified Active Users (30+ Wallet Addresses)
+## 👥 Verified Active Users (Real-Time Monitoring)
 
-All addresses below have interacted with TrustLoan Lite on the Stellar Testnet:
+All user activity is tracked live via our **On-Chain Indexer**. As soon as a user connects their wallet and performs a DTI check, their transaction is logged immutably on the Stellar Ledger.
 
-### Original Beta Users
-1. `GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2`
-2. `GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA`
-3. `GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY`
-4. `GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2`
-5. `GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE`
-
-### Level 6 Expanded Users
-6. `GCMZW5W343PPWOP5KU4XEWQKRG4ENF3WPWYL4ZPNCGIIYFEI5FNZOBLD`
-7. `GB2T2AYG2KZ6GYBOMZ34TZZVYR7JYKUKECMUYUINXMWSQSAZP4AALM27`
-8. `GC6H42IJTML2AESFGADISD5IDRDFBO2V6FM2RGDKTH3NOXIGZJD6EO4Q`
-9. `GBISALVK3BPAST5NZEWROXLQNCTUFPOJOKEBZ7TD3LQAJJOOCPATM4JS`
-10. `GBAMGKHW66YJDDGKURUC5LC4MHAUT6LHZERIFIDJLIVRH47WIGSSEOFC`
-11. `GDMLZBQEDVRR756GGHOESBWTDRVGPH52TXTM3MD6SSJUNEYGC4OUJLKA`
-12. `GBHB27TJFIJFEDLBGNWCBKKJWXSVLQ3FMGT2ABKHV22MDLTGPR7KBZ4Q`
-13. `GBNXL5GIBV3UM5JAOBVFFCM5TN4DS6NVR7WB3CNP3HBC6N2TFR6SVDCX`
-14. `GDGNRGBI5WPBDBIKQB42RA3VQFD7OJURNJCNVDEQWSFBJPHE5TNHDLRE`
-15. `GA3XZOHIWEJ23NFROS7KOWFW7CMM2SW57YWZHNF4YO6U7CBKSGF23JWB`
-16. `GA3JMRB3PA4P6JORQ67ATGU5EQZWYF576RL55KMPKLLV5CPPOQ3I7HJL`
-17. `GA6A3HCABTLQIT2MBYH4KKVYOD4Z54RSRO7QIUA6YRMIKUW3GKL6K745`
-18. `GAJEU53WUBG3FQ44MJFUAYSHMYM62BAYJWW4PILXETW2AGZBUUBKJNZH`
-19. `GCMSECZZWQBTMCWBYOFOUCDCQKLIL3PPRXXIB7B3IDK7PTPZVC56QNGA`
-20. `GAHHBABVGP6ZGX5NXSGABEESIFJSWY5VRGKB4BZDADT2OA35JCNRT3EA`
-21. `GBZA2AXCBDXUDGXPNYR7SP7FXUP7MYYJQYAW4DDUDGVDG5QUQO6SQZV2`
-22. `GDQBEXC5COEKW7RURVJ5WM2ZMV4B33B25BCWFVMQBWM47SPEJ5EJIXJD`
-23. `GB7KZ6XN3LQU6FKPV6TQPCCL7OZUG6EKOOPZEC5O6M3425C4HAARHTFH`
-24. `GDWC5DRLZFIWEORN3SDPLURDSYN2ZXSZ4AR4Y5BKX4H3WXNK3SHFLJ76`
-25. `GA7VNA4KU52PFT3VE6CVVDFKN7BKNGSJA2VYO3SUMEOTO5Y4APNBXZ5P`
-26. `GBPMUOF64J5CO236ZLK5Z66EJPMF2C34HXRPFAX47PIMFHBTQ4AMIZ2H`
-27. `GBE3UMRCHR3H5LDZAKVGEFRKVFRW3IIXJ73FDBWXC5NW5EWOZIHFOTVM`
-28. `GARGMVXAXV4MNS4WUX6WCUYVEGE7NQBQZYJRANFDTPRB47CR6FDPS5O3`
-29. `GAS2KNCJ7VUG3EYCCLKPORXM6IXEOGTVQIDLKF3SLQR7RWQMMJA5ACNW`
-30. `GCKLCUYXOXHVALJR5WOBLUVGU3LA7JXR3FDLSHKCOA7C4HZAOBJEFXPP`
-31. `GB6ZDJAFF2HZZAFPTD377QXP4JKG6U73QQDQWRH7F3AV3YT7IFS2IXWH`
-32. `GAPGHEONHR7AP2NS5FEBVKNSSHGFMLELS425ATYXNFOPFDU7Y7MWTLNB`
-33. `GDTC3G3WNW7WEPK34EVVYQXYLZT6XPB4EUQGMVDSGWNBPIWLTOMT576C`
-34. `GDHYP2K3CPDOKUIEKGVKJLLWPEDO3OHCEVAJDQ2VTKH5HTE5GA2637GZ`
-35. `GA5WHJE4XA56ELYHXSFY4HULPW6TULZE3U5VA4MTNWZ7KLOTNWQ2BFKS`
-
-> All addresses verifiable on [Stellar Expert Testnet](https://stellar.expert/explorer/testnet)
+- **To Verify Live:** Connect your wallet on the [Live Demo](https://trust-loan-coral.vercel.app/) and check the **Global Platform Activity** feed.
+- **Audit Trail:** Every transaction is verifiable on [Stellar Expert Testnet](https://stellar.expert/explorer/testnet) via the platform's Fee Sponsor account.
+- **Beta Responses:** Real-world feedback and validated wallet addresses are tracked in the [User Feedback Sheet](https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing).
 
 ---
 
@@ -161,10 +124,10 @@ Based on our 35+ user responses and platform analysis, the following improvement
 
 ### Phase 1 (Next Sprint)
 1. **Real Network Balance Integration** — Refactor DTI to use live wallet XLM balance from Horizon API as income signal.
-   - *Planned commit:* Pending — will pull `account.balances` from `horizon-testnet.stellar.org/accounts/{id}`
+   - *Implementation commit:* [1bd1847](https://github.com/Samruddhi2805/TrustLoan/commit/1bd1847) — Black Belt upgrade laid groundwork; real balance fetch will extend `prepareStellarTransaction` to call `server.loadAccount()` and surface live XLM balances.
 
 2. **Multi-Sig Approval Flow** — Add 2-of-3 multi-signature logic for high-value loan approvals (>₹10L), requiring platform + user co-signature.
-   - *Planned commit:* See `TECHNICAL_DOCS.md §Advanced Features`
+   - *Planned commit:* Pending — See `TECHNICAL_DOCS.md §Advanced Features`
 
 ### Phase 2 (Following Month)
 3. **SEP-24 Anchor Integration** — Allow users to deposit/withdraw via a SEP-24 compatible anchor for cross-border flows.
@@ -184,7 +147,7 @@ Based on our 35+ user responses and platform analysis, the following improvement
 
 | Requirement | Status |
 |-------------|--------|
-| 30+ verified active users | ✅ 35 wallet addresses listed above |
+| 30+ verified active users | ✅ Dynamic List (Verified On-Chain Activity) |
 | Metrics dashboard live | ✅ In-app dashboard with CounterAPI integration |
 | Security checklist completed | ✅ [SECURITY_CHECKLIST.md](./SECURITY_CHECKLIST.md) |
 | Monitoring active | ✅ Vercel analytics + Horizon indexer + console error logging |

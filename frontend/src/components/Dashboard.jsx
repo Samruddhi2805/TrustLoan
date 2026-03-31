@@ -1,38 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { History, BarChart3, Clock, CheckCircle, XCircle, ExternalLink, Database, Search } from 'lucide-react';
+import { History, BarChart3, Clock, CheckCircle, XCircle, ExternalLink, Database, Search, Users, Activity, Globe } from 'lucide-react';
 
 export default function Dashboard({ account, history, activeUserCount }) {
   const [indexedData, setIndexedData] = useState([]);
   const [indexingActive, setIndexingActive] = useState(false);
 
+  const [globalActivity, setGlobalActivity] = useState([]);
+
   useEffect(() => {
     if (!account) return;
     setIndexingActive(true);
-    // Data Indexer: Fetching historical payments to this account from Horizon
-    fetch(`https://horizon-testnet.stellar.org/accounts/${account}/payments?limit=50&order=desc`)
-      .then(res => res.json())
-      .then(data => {
-        const records = data._embedded.records;
-        // Fetch transaction details to get memos
-        const txPromises = records.map(r => 
-          fetch(r._links.transaction.href).then(res => res.json()).catch(() => null)
-        );
-        return Promise.all(txPromises);
-      })
-      .then(txs => {
-        const validTxs = txs.filter(tx => tx && tx.memo_type === 'text' && tx.memo && tx.memo.startsWith('DTI:'));
-        const formattedData = validTxs.map(tx => {
-          const parts = tx.memo.split('|');
-          const dti = parts[0].replace('DTI:', '');
-          const status = parts[1];
-          return {
-            hash: tx.hash,
-            timestamp: tx.created_at,
-            dti,
-            status,
-          };
-        });
-        setIndexedData(formattedData);
+    
+    // FETCH 1: Connected User's direct history from Horizon
+    const userHistoryUrl = `https://horizon-testnet.stellar.org/accounts/${account}/payments?limit=30&order=desc`;
+    
+    // FETCH 2: Global Platform Sponsor activity (shows all "Gasless" users)
+    const SPONSOR_ACCOUNT = 'GDSVLBKLH3YMOGCW6SLBF4QX7H5Q2HMCWNTFL3NDIBQU2EP43QANVF5J';
+    const globalSourceUrl = `https://horizon-testnet.stellar.org/accounts/${SPONSOR_ACCOUNT}/payments?limit=30&order=desc`;
+
+    Promise.all([
+      fetch(userHistoryUrl).then(r => r.json()),
+      fetch(globalSourceUrl).then(r => r.json()).catch(() => ({ _embedded: { records: [] } }))
+    ])
+    .then(async ([userData, globalData]) => {
+        // Handle User Indexer
+        const userRecords = userData._embedded.records;
+        const userTxPromises = userRecords.map(r => fetch(r._links.transaction.href).then(res => res.json()).catch(() => null));
+        const userTxs = await Promise.all(userTxPromises);
+        
+        const userFormatted = userTxs
+          .filter(tx => tx && tx.memo_type === 'text' && tx.memo && tx.memo.startsWith('DTI:'))
+          .map(tx => {
+            const [dtiPart, status] = tx.memo.split('|');
+            return {
+              hash: tx.hash,
+              timestamp: tx.created_at,
+              dti: dtiPart.replace('DTI:', ''),
+              status,
+            };
+          });
+        setIndexedData(userFormatted);
+
+        // Handle Global Platform Indexer
+        const globalRecords = globalData._embedded.records;
+        const globalTxPromises = globalRecords.map(r => fetch(r._links.transaction.href).then(res => res.json()).catch(() => null));
+        const globalTxs = await Promise.all(globalTxPromises);
+        
+        const globalFormatted = globalTxs
+          .filter(tx => tx && tx.source_account)
+          .map(tx => ({
+             hash: tx.hash,
+             timestamp: tx.created_at,
+             source: tx.source_account
+          }));
+        setGlobalActivity(globalFormatted);
+
         setIndexingActive(false);
       })
       .catch(err => {
@@ -49,7 +71,7 @@ export default function Dashboard({ account, history, activeUserCount }) {
     : '0.00';
   
   const approvalRate = totalChecks > 0
-    ? ((history.filter(h => h.approved).length / totalChecks) * 100).toFixed(0)
+    ? ((history.filter(h => h.status === 'APPROVE').length / totalChecks) * 100).toFixed(0)
     : 0;
 
   return (
@@ -144,10 +166,10 @@ export default function Dashboard({ account, history, activeUserCount }) {
                       <div className="text-accent-cyan">${item.loanAmount} <span className="text-xs text-gray-500">req</span></div>
                     </td>
                     <td className="p-4 font-mono text-sm">
-                      <span className="bg-black/30 px-2 py-1 rounded">{item.dti}</span>
+                      <span className="bg-black/30 px-2 py-1 rounded">{(item.dti * 100).toFixed(1)}%</span>
                     </td>
                     <td className="p-4">
-                      {item.approved ? (
+                      {item.status === 'APPROVE' ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                           <CheckCircle className="w-3.5 h-3.5" />
                           APPROVED
@@ -245,6 +267,81 @@ export default function Dashboard({ account, history, activeUserCount }) {
         )}
       </div>
 
+      {/* LIVE COMMUNITY FEED Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        {/* Verified Community Activity (Live Feed) */}
+        <div className="glass-card flex flex-col h-[400px]">
+           <div className="p-5 border-b border-glass-border flex items-center justify-between bg-black/30">
+              <div className="flex items-center gap-3">
+                 <Globe className="w-5 h-5 text-accent-teal" />
+                 <h3 className="font-bold text-white uppercase tracking-wider text-sm">On-Chain Active Wallets</h3>
+              </div>
+              <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full animate-pulse border border-emerald-500/30">SCALING LIVE</span>
+           </div>
+           <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
+              {globalActivity.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3 opacity-50">
+                  <Users className="w-10 h-10 text-gray-500" />
+                  <p className="text-sm font-medium">Waiting for network activity...</p>
+                  <p className="text-xs text-gray-600">Connect a wallet and check eligibility to appear in the live feed.</p>
+                </div>
+              ) : (
+                globalActivity.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:border-accent-teal/30 transition-all group">
+                    <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-[10px] font-mono group-hover:from-accent-teal/30 group-hover:to-accent-violet/30">
+                          {idx + 1}
+                        </div>
+                        <span className="font-mono text-xs text-gray-400 group-hover:text-gray-200">{item.source.slice(0, 10)}...{item.source.slice(-10)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                        <span className="text-[10px] text-gray-500 uppercase tracking-tighter">Verified On-Chain</span>
+                    </div>
+                  </div>
+                ))
+              )}
+           </div>
+        </div>
+
+        {/* Global Live Activity Feed (Platform Logs) */}
+        <div className="glass-card flex flex-col h-[400px]">
+           <div className="p-5 border-b border-glass-border flex items-center justify-between bg-black/30">
+              <div className="flex items-center gap-3">
+                 <Activity className="w-5 h-5 text-accent-violet" />
+                 <h3 className="font-bold text-white uppercase tracking-wider text-sm">Real-Time Platform Activity</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                 <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></div>
+                 <span className="text-xs text-rose-400 uppercase tracking-widest font-black">Live</span>
+              </div>
+           </div>
+           <div className="flex-1 p-5 overflow-y-auto space-y-4">
+              {globalActivity.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-4 text-gray-500">
+                  <Globe className="w-12 h-12 text-gray-700" />
+                  <div>
+                    <p className="font-bold text-gray-400">Platform-wide Indexing Active</p>
+                    <p className="text-xs text-gray-600 mt-1">Watching for recent DTI checks on the network...</p>
+                  </div>
+                </div>
+              ) : (
+                globalActivity.map((item, idx) => (
+                  <div key={idx} className="p-3 rounded-xl bg-white/5 border border-glass-border/30 flex items-center justify-between">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-gray-500 uppercase">TX HASH</span>
+                      <span className="text-xs font-mono text-accent-cyan">{item.hash.slice(0, 12)}...</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] text-gray-500 uppercase">TIME</span>
+                      <p className="text-xs text-gray-300">{new Date(item.timestamp).toLocaleTimeString()}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+           </div>
+        </div>
+      </div>
     </div>
   );
 }
