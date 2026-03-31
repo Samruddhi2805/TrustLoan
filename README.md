@@ -136,12 +136,13 @@ All user activity is tracked natively via the **Soroban DB** (`get_active_users(
 - **Google Form Submissions:** Real-world feedback and user wallet addresses are tracked in the [User Feedback Sheet](https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing).
 
 <details>
-<summary><b>📋 View Verified Testnet Active Users (from Google Form + On-Chain)</b></summary>
+<summary><b>📋 41 Verified Testnet Active Users (Google Form + On-Chain)</b></summary>
 <br>
 
-The following wallet addresses are verified testnet users sourced from the Google Form submissions and verifiable on the Soroban contract's `get_active_users()` endpoint:
+All addresses below are sourced from **Google Form submissions** and verifiable on the Soroban contract's `get_active_users()` endpoint or [Stellar Expert Testnet Explorer](https://stellar.expert/explorer/testnet).
 
-1. `GDSVLBKLH3YMOGCW6SLBF4QX7H5Q2HMCWNTFL3NDIBQU2EP43QANVF5J` (Fee Sponsor)
+**From platform / early access:**
+1. `GDSVLBKLH3YMOGCW6SLBF4QX7H5Q2HMCWNTFL3NDIBQU2EP43QANVF5J` — Fee Sponsor Account
 2. `GCMZW5W343PPWOP5KU4XEWQKRG4ENF3WPWYL4ZPNCGIIYFEI5FNZOBLD`
 3. `GB2T2AYG2KZ6GYBOMZ34TZZVYR7JYKUKECMUYUINXMWSQSAZP4AALM27`
 4. `GC6H42IJTML2AESFGADISD5IDRDFBO2V6FM2RGDKTH3NOXIGZJD6EO4Q`
@@ -159,7 +160,33 @@ The following wallet addresses are verified testnet users sourced from the Googl
 16. `GAHHBABVGP6ZGX5NXSGABEESIFJSWY5VRGKB4BZDADT2OA35JCNRT3EA`
 17. `GBZA2AXCBDXUDGXPNYR7SP7FXUP7MYYJQYAW4DDUDGVDG5QUQO6SQZV2`
 
-> 📌 **Note:** Additional wallet addresses are continuously growing as new users connect and run evaluations. The live, always-current list is available directly from the contract via `get_active_users()` on the [live demo](https://trust-loan-coral.vercel.app/). All additional user wallet addresses collected via the Google Form are available in the [User Feedback Sheet](https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing).
+**From Google Form submissions:**
+18. `GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2`
+19. `GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA`
+20. `GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY`
+21. `GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2`
+22. `GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE`
+23. `GDJOO26P2DDY7VXSFXLT5BYOHCJSC6G4P6S6LJ2DVPQA77HLBJBLQ5MM`
+24. `GALWWEGHOMU5YODTZBVGPFP2OHCJH5VO3VKWNMW7ZNT6OECINVPQT7SQ`
+25. `GDQCMJ4QRAAPAE6RGWHXWIDJEX76KKOWHKPS5S7LA2KOFW5O5SDK4OT2`
+26. `GDSDCTRF7LK4DDGYWFWKFNXC7C4E5R2QRBXO6F2YOLPNOPSDUOVUDMJK`
+27. `GDSAPEWHI7TDPDE56KVWLY3MP2DUW5XPSHG4GW4BICUYXZD3QV6JQQ22`
+28. `GCWYYLR3KNCQBDIK7DAXH4EE5K6FMJTKHN6T2IJNDYIMRVYOWGBMXXGO`
+29. `GBLUMAX4IIPS54AIGD5WXRRAXISG4HLV3BE3YR3SQAD3GZSXRTVJY5GI`
+30. `GA66W3CVWX5OML7XCWMPFLLR2JUDYPC6SSJIMJ4QVGEX57HNOXWVT7LZ`
+31. `GCPRYOCR7W4TDPWVQ4G776HLUMQEDIEVDAAJKJOZ4GEEMJ3GDKSDD4WQ`
+32. `GAX3BUTS3WIPPG5CWXKD3VBJ3RVXQEVDMWUSTRQBFP5W4QCHZLZJNZ2Q`
+33. `GCPTFMR5OVMXK4SIXD7TIMWEPKKMQ46LZJE6LO2GFFTSUXJLPVZ4BRIK`
+34. `GCRZVOA4MK4KL7XQEF5UJ53UZMZFPNR4CXGG4NKZ3VM27HWAJ46JHX45`
+35. `GAOPU7F45IYKSHPMXDOJOQN35WJOHZZ7VEKC2NYBEK3NS2QAQZS36WUD`
+36. `GDQ4VE6TJWWRIKJKUVLL6SPNZVXZUX5Z4I34NXL6BFBBGMGPXDG6KZHY`
+37. `GAUPZT3DNHNOHCQQPYIUEXRMTRVB2DWKPR65BTUH6IEFU4PNEQAPWWEC`
+38. `GCUSV4FNOJLXIM7OVSYXQTDTS7SEWH7GQ4RZ5P4JKNA5PD6QGDQBOA2J`
+39. `GAV4BFB34YYV2KJZSLCU4CADHKCMEEHFOCQYMH6C3SM6HPGGDNZAZFQ4`
+40. `GC7L6DRJZFYCZOJIHCQN2MKRDY3SS2CU7N6SOUTU6Q4O7DKVJJYFVZLC`
+41. `GAIMHMWAHIRFYPPJZQXFJF4RJ7BJ42ANLJBIO4APOCPINLQXJJJUGZD7`
+
+> 📌 **Live verification:** The always-current wallet list is available directly from the Soroban contract via `get_active_users()` on the [live demo](https://trust-loan-coral.vercel.app/) → scroll to **On-Chain Active Wallets** panel. Full form responses and feedback in the [User Feedback Sheet](https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing).
 
 </details>
 
