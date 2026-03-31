@@ -6,6 +6,13 @@ export default function Dashboard({ account, history, activeUserCount }) {
   const [indexingActive, setIndexingActive] = useState(false);
 
   const [globalActivity, setGlobalActivity] = useState([]);
+  const [apiMetrics, setApiMetrics] = useState({
+     dailyActiveUsers: 0,
+     totalTransactions: 0,
+     retentionRatePct: 0,
+     averageDti: 0,
+     distribution: { safe: 0, caution: 0, danger: 0 }
+  });
 
   useEffect(() => {
     if (!account) return;
@@ -20,9 +27,13 @@ export default function Dashboard({ account, history, activeUserCount }) {
 
     Promise.all([
       fetch(userHistoryUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } })),
-      fetch(globalSourceUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } }))
+      fetch(globalSourceUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } })),
+      fetch('/api/metrics').then(r => r.json()).catch(() => null)
     ])
-    .then(async ([userData, globalData]) => {
+    .then(async ([userData, globalData, metricsData]) => {
+        if (metricsData && !metricsData.error) {
+           setApiMetrics(metricsData);
+        }
         // Handle User Indexer
         const userRecords = userData._embedded.records;
         const userTxPromises = userRecords.map(r => fetch(r._links.transaction.href).then(res => res.json()).catch(() => null));
@@ -141,18 +152,22 @@ export default function Dashboard({ account, history, activeUserCount }) {
           </div>
           <h3 className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-accent-violet to-accent-pink">Global Platform Metrics</h3>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-glass-border/30 bg-black/10">
+        <div className="grid grid-cols-1 sm:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-glass-border/30 bg-black/10">
           <div className="p-6 text-center">
-            <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">Total Active Users</h4>
-            <p className="text-4xl font-bold text-white">{activeUserCount}</p>
+            <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Daily DB Users</h4>
+            <p className="text-3xl font-bold text-white">{apiMetrics.dailyActiveUsers}</p>
           </div>
           <div className="p-6 text-center">
-            <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">Platform Transactions</h4>
-            <p className="text-4xl font-bold text-accent-cyan">{activeUserCount * 3}</p>
+            <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">DB Trax</h4>
+            <p className="text-3xl font-bold text-accent-cyan">{apiMetrics.totalTransactions}</p>
           </div>
           <div className="p-6 text-center">
-            <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">30x Retention Rate</h4>
-            <p className="text-4xl font-bold text-emerald-400">82.4%</p>
+            <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">DB Retention</h4>
+            <p className="text-3xl font-bold text-emerald-400">{apiMetrics.retentionRatePct}%</p>
+          </div>
+          <div className="p-6 text-center">
+            <h4 className="text-[10px] text-gray-400 uppercase tracking-widest mb-1">Global DTI Avg</h4>
+            <p className="text-3xl font-bold text-rose-400">{apiMetrics.averageDti}%</p>
           </div>
         </div>
       </div>
