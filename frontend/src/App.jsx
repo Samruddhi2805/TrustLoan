@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { isAllowed, setAllowed, getAddress, isConnected as checkFreighterConnected, signTransaction } from '@stellar/freighter-api';
-import { Horizon, TransactionBuilder, Networks, Asset, Operation, Memo } from '@stellar/stellar-sdk';
+import { Horizon, TransactionBuilder, Networks, Asset, Operation, Memo, FeeBumpTransaction, Keypair } from '@stellar/stellar-sdk';
 import Navbar from './components/Navbar';
 import FormCard from './components/FormCard';
 import ResultCard from './components/ResultCard';
 import Dashboard from './components/Dashboard';
+import FeeBumpBadge from './components/FeeBumpBadge';
 
 // ─── Core Financial Calculations ─────────────────────────────────────────────
 
@@ -74,6 +75,16 @@ export function evaluateEligibility(income, existingEMIs, newEMI) {
 const COUNTER_NAMESPACE = 'trustloan_lite';
 const COUNTER_KEY = 'active_users_v2';
 
+// ─── Fee Sponsorship Config (Advanced Feature: Gasless Transactions) ───────────
+// A platform-managed sponsor account funds all transaction fees.
+// Users connect with Freighter and sign only their DTI check — the platform
+// wraps it in a Fee Bump envelope so users pay ZERO XLM in network fees.
+const FEE_SPONSOR_SECRET = 'SCZANGBA5AAAA7VWBST3CF6QRKZBR3C53AMJHKFFRM4CQVQK2TRNRFR'; // Testnet-only demo sponsor
+const FEE_SPONSOR_KEYPAIR = (() => {
+  try { return Keypair.fromSecret(FEE_SPONSOR_SECRET); } catch { return null; }
+})();
+const FEE_SPONSOR_ADDRESS = FEE_SPONSOR_KEYPAIR ? FEE_SPONSOR_KEYPAIR.publicKey() : null;
+
 // Get the current shared count from the API
 async function fetchSharedUserCount() {
   try {
@@ -127,6 +138,8 @@ function App() {
   const [isManuallyDisconnected, setIsManuallyDisconnected] = useState(false);
   const [activeUserCount, setActiveUserCount] = useState(0);
 
+  const [useFeeBump, setUseFeeBump] = useState(true); // Gasless mode on by default
+
   // Fetch shared user count on mount and poll every 10s for real-time updates
   useEffect(() => {
     const updateCount = () => fetchSharedUserCount().then(count => setActiveUserCount(count));
@@ -167,8 +180,8 @@ function App() {
         const accountData = await server.loadAccount(publicKey);
 
         const memoStr = `DTI:${(dti * 100).toFixed(1)}%|${status}`;
-        const transaction = new TransactionBuilder(accountData, {
-          fee: await server.fetchBaseFee(),
+        const innerTx = new TransactionBuilder(accountData, {
+          fee: '100',
           networkPassphrase: Networks.TESTNET,
         })
           .addOperation(Operation.payment({
@@ -177,19 +190,46 @@ function App() {
             amount: '0.0000001',
           }))
           .addMemo(Memo.text(memoStr))
-          .setTimeout(30)
+          .setTimeout(60)
           .build();
 
-        const response = await signTransaction(transaction.toXDR(), { networkPassphrase: Networks.TESTNET });
+        // User signs the inner transaction
+        const response = await signTransaction(innerTx.toXDR(), { networkPassphrase: Networks.TESTNET });
         if (response.error) throw new Error(response.error);
         if (!response.signedTxXdr) throw new Error('Transaction signing was cancelled or failed');
 
-        const signedTx = TransactionBuilder.fromXDR(response.signedTxXdr, Networks.TESTNET);
-        const txResult = await server.submitTransaction(signedTx);
+        const signedInnerTx = TransactionBuilder.fromXDR(response.signedTxXdr, Networks.TESTNET);
+
+        let txToSubmit = signedInnerTx;
+        let gasless = false;
+
+        // ── Advanced Feature: Fee Bump (Gasless) ──────────────────────────
+        // If fee sponsorship is available, wrap the user's signed inner tx
+        // in a Fee Bump envelope and sign with sponsor keypair.
+        // The sponsor pays all network fees — user pays ZERO.
+        if (useFeeBump && FEE_SPONSOR_KEYPAIR) {
+          try {
+            const feeBumpTx = TransactionBuilder.buildFeeBumpTransaction(
+              FEE_SPONSOR_KEYPAIR,
+              '1000', // fee per operation paid by sponsor
+              signedInnerTx,
+              Networks.TESTNET
+            );
+            feeBumpTx.sign(FEE_SPONSOR_KEYPAIR);
+            txToSubmit = feeBumpTx;
+            gasless = true;
+          } catch (feeBumpErr) {
+            console.warn('Fee bump failed, falling back to standard tx:', feeBumpErr.message);
+            txToSubmit = signedInnerTx;
+          }
+        }
+        // ── End Advanced Feature ──────────────────────────────────────────
+
+        const txResult = await server.submitTransaction(txToSubmit);
 
         return {
           wait: async () => ({ hash: txResult.hash }),
-          resultData: { status, reason, dti, disposablePct, newEMI },
+          resultData: { status, reason, dti, disposablePct, newEMI, gasless },
         };
       } catch (error) {
         console.error('Stellar Network Error:', error);
@@ -352,6 +392,9 @@ function App() {
                   handleInputChange={handleInputChange}
                   checkEligibility={checkEligibility}
                   loading={loading}
+                  useFeeBump={useFeeBump}
+                  setUseFeeBump={setUseFeeBump}
+                  sponsorAddress={FEE_SPONSOR_ADDRESS}
                 />
               </div>
               <div className="w-full lg:w-1/2 flex min-h-[400px]">
@@ -376,7 +419,7 @@ function App() {
                 )}
               </div>
             </div>
-            <Dashboard account={account} history={history} />
+            <Dashboard account={account} history={history} activeUserCount={activeUserCount} />
           </div>
         )}
       </main>

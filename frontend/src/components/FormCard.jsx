@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { calculateEMI, calculateDTI, calculateDisposablePct } from '../App';
+import FeeBumpBadge from './FeeBumpBadge';
 
 function usePreview(formData) {
   return useMemo(() => {
@@ -43,7 +44,7 @@ function InputField({ id, label, hint, placeholder, name, value, onChange, min =
   );
 }
 
-export default function FormCard({ formData, handleInputChange, checkEligibility, loading }) {
+export default function FormCard({ formData, handleInputChange, checkEligibility, loading, useFeeBump, setUseFeeBump, sponsorAddress }) {
   const preview = usePreview(formData);
 
   const dtiPct = preview ? (preview.dti * 100).toFixed(1) : null;
@@ -174,9 +175,11 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
             </div>
           )}
 
+          <FeeBumpBadge isActive={useFeeBump} sponsorAddress={sponsorAddress} />
+
           <button
             type="submit" id="check-eligibility-btn" disabled={loading}
-            className="w-full btn-gradient mt-4 relative overflow-hidden flex justify-center items-center h-[52px]"
+            className="w-full btn-gradient mt-2 relative overflow-hidden flex justify-center items-center h-[52px]"
           >
             {loading ? (
               <span className="flex items-center gap-3">
