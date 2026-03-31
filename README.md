@@ -4,7 +4,7 @@ A decentralized financial application generating on-chain verified Debt-to-Incom
 
 ## Live Links
 - **Live Demo Site**: **https://trust-loan-coral.vercel.app/**
-- **Demo Video**: **https://drive.google.com/file/d/1uPCFjFkYDXmpp1UngbamDE06R1cnmol6/view?usp=sharing**
+- **Demo Video**: **https://drive.google.com/file/d/1QqeFI3cVhL3PadSvtrSyXNpopvHJgB9f/view?usp=sharing**
 - **User Feedback Excel Sheet**: **https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing**
 - **User Google Form (For testing)**: **https://forms.gle/RnorBqa3w2jFYK3t5**
 
