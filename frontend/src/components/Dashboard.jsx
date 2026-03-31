@@ -36,20 +36,23 @@ export default function Dashboard({ account, history }) {
 
   useEffect(() => {
     if (!account) return;
-    setIndexingActive(true);
-    
-    // FETCH 1: Connected User's direct history from Horizon
-    const userHistoryUrl = `https://horizon-testnet.stellar.org/accounts/${account}/payments?limit=30&order=desc`;
-    
-    // FETCH 2: Global Platform Sponsor activity
-    const SPONSOR_ACCOUNT = 'GDSVLBKLH3YMOGCW6SLBF4QX7H5Q2HMCWNTFL3NDIBQU2EP43QANVF5J';
-    const globalSourceUrl = `https://horizon-testnet.stellar.org/accounts/${SPONSOR_ACCOUNT}/payments?limit=30&order=desc`;
 
-    Promise.all([
-      fetch(userHistoryUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } })),
-      fetch(globalSourceUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } }))
-    ])
-    .then(async ([userData, globalData]) => {
+    const fetchIndexer = async () => {
+      setIndexingActive(true);
+      
+      // FETCH 1: Connected User's direct history from Horizon
+      const userHistoryUrl = `https://horizon-testnet.stellar.org/accounts/${account}/payments?limit=30&order=desc`;
+      
+      // FETCH 2: Real-time Platform Contract Invocations directly traversing the Soroban DB interactions
+      const CONTRACT_ACCOUNT = 'CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX';
+      const globalSourceUrl = `https://horizon-testnet.stellar.org/accounts/${CONTRACT_ACCOUNT}/transactions?limit=30&order=desc`;
+
+      try {
+        const [userData, globalData] = await Promise.all([
+          fetch(userHistoryUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } })),
+          fetch(globalSourceUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } }))
+        ]);
+
         // Handle User Indexer
         const userRecords = userData._embedded.records;
         const userTxPromises = userRecords.map(r => fetch(r._links.transaction.href).then(res => res.json()).catch(() => null));
@@ -70,10 +73,7 @@ export default function Dashboard({ account, history }) {
 
         // Handle Global Platform Indexer directly from Blockchain DB traces
         const globalRecords = globalData._embedded.records;
-        const globalTxPromises = globalRecords.map(r => fetch(r._links.transaction.href).then(res => res.json()).catch(() => null));
-        const globalTxs = await Promise.all(globalTxPromises);
-        
-        const globalFormatted = globalTxs
+        const globalFormatted = globalRecords
           .filter(tx => tx && tx.source_account)
           .map(tx => ({
              hash: tx.hash,
@@ -82,12 +82,16 @@ export default function Dashboard({ account, history }) {
           }));
 
         setGlobalActivity(globalFormatted);
-        setIndexingActive(false);
-      })
-      .catch(err => {
+      } catch (err) {
         console.error("Indexing failed", err);
+      } finally {
         setIndexingActive(false);
-      });
+      }
+    };
+
+    fetchIndexer();
+    const indexInterval = setInterval(fetchIndexer, 15000); // Live poll every 15s
+    return () => clearInterval(indexInterval);
   }, [account]);
 
   if (!account) return null;

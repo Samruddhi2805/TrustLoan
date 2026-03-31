@@ -71,9 +71,7 @@ export function evaluateEligibility(income, existingEMIs, newEMI) {
   return { status, reason, dti, disposablePct };
 }
 
-// ─── Active Users Tracker (Cross-Device via CounterAPI) ────────────────────────
-const COUNTER_NAMESPACE = 'trustloan_lite';
-const COUNTER_KEY = 'active_users_v2';
+// Tracker logic removed. Enforcing strict Rust backend.
 
 // ─── Fee Sponsorship Config (Advanced Feature: Gasless Transactions) ───────────
 // A platform-managed sponsor account funds all transaction fees.
@@ -85,48 +83,7 @@ const FEE_SPONSOR_KEYPAIR = (() => {
 })();
 const FEE_SPONSOR_ADDRESS = FEE_SPONSOR_KEYPAIR ? FEE_SPONSOR_KEYPAIR.publicKey() : null;
 
-// Get the current shared count from the API
-async function fetchSharedUserCount() {
-  try {
-    const res = await fetch(`https://corsproxy.io/?https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}`);
-    if (!res.ok) throw new Error();
-    const data = await res.json();
-    return data.count ?? 0;
-  } catch {
-    // fallback to localStorage count
-    try {
-      const stored = localStorage.getItem('tl_seen_wallets_v2');
-      return stored ? JSON.parse(stored).length : 0;
-    } catch { return 0; }
-  }
-}
-
-// Check if this wallet has been counted before (localStorage per-device dedup)
-function isNewWallet(address) {
-  try {
-    const seen = JSON.parse(localStorage.getItem('tl_seen_wallets_v2') || '[]');
-    return !seen.includes(address);
-  } catch { return true; }
-}
-
-function markWalletSeen(address) {
-  try {
-    const seen = JSON.parse(localStorage.getItem('tl_seen_wallets_v2') || '[]');
-    if (!seen.includes(address)) {
-      localStorage.setItem('tl_seen_wallets_v2', JSON.stringify([...seen, address]));
-    }
-  } catch {}
-}
-
-// Increment shared counter + mark wallet seen locally
-async function registerActiveUser(address) {
-  if (!isNewWallet(address)) return; // already counted on this device
-  markWalletSeen(address);
-  try {
-    await fetch(`https://corsproxy.io/?https://api.counterapi.dev/v1/${COUNTER_NAMESPACE}/${COUNTER_KEY}/up`);
-  } catch {}
-}
-
+// Removed static mock APIs
 // ─── App Component ────────────────────────────────────────────────────────────
 
 function App() {
@@ -140,10 +97,23 @@ function App() {
 
   const [useFeeBump, setUseFeeBump] = useState(true); // Gasless mode on by default
 
-  // Fetch shared user count on mount (no interval spam to prevent CORS logs)
+  // Fetch true active user count from Soroban DB on mount + real-time polling
   useEffect(() => {
-    const updateCount = () => fetchSharedUserCount().then(count => setActiveUserCount(count));
+    async function updateCount() {
+       try {
+           const { Client } = await import('trustloan');
+           const client = new Client({
+              networkPassphrase: Networks.TESTNET,
+              contractId: "CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX",
+              rpcUrl: "https://soroban-testnet.stellar.org:443"
+           });
+           const userRes = await client.get_user_count();
+           setActiveUserCount(Number(userRes.result || 0));
+       } catch (err) { console.error(err); }
+    }
     updateCount();
+    const interval = setInterval(updateCount, 15000); // 15-second real-time polling
+    return () => clearInterval(interval);
   }, []);
 
   const [formData, setFormData] = useState({
