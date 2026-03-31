@@ -140,12 +140,10 @@ function App() {
 
   const [useFeeBump, setUseFeeBump] = useState(true); // Gasless mode on by default
 
-  // Fetch shared user count on mount and poll every 10s for real-time updates
+  // Fetch shared user count on mount (no interval spam to prevent CORS logs)
   useEffect(() => {
     const updateCount = () => fetchSharedUserCount().then(count => setActiveUserCount(count));
     updateCount();
-    const countInterval = setInterval(updateCount, 10000);
-    return () => clearInterval(countInterval);
   }, []);
 
   const [formData, setFormData] = useState({

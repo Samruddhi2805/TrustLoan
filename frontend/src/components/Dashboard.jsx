@@ -19,8 +19,8 @@ export default function Dashboard({ account, history, activeUserCount }) {
     const globalSourceUrl = `https://horizon-testnet.stellar.org/accounts/${SPONSOR_ACCOUNT}/payments?limit=30&order=desc`;
 
     Promise.all([
-      fetch(userHistoryUrl).then(r => r.json()),
-      fetch(globalSourceUrl).then(r => r.json()).catch(() => ({ _embedded: { records: [] } }))
+      fetch(userHistoryUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } })),
+      fetch(globalSourceUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } }))
     ])
     .then(async ([userData, globalData]) => {
         // Handle User Indexer
