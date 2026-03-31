@@ -34,7 +34,7 @@ if (typeof window !== "undefined") {
 export const networks = {
   testnet: {
     networkPassphrase: "Test SDF Network ; September 2015",
-    contractId: "CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX",
+    contractId: "CDOLUZMCCZODFA43Z4SJWKGOBBLUCGTDBRAMAKSWKNCZP6KLOF6TLTWB",
   }
 } as const
 
@@ -106,6 +106,18 @@ export interface Client {
    */
   get_user_count: (options?: MethodOptions) => Promise<AssembledTransaction<u64>>
 
+  /**
+   * Construct and simulate a get_active_users transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Read the exact list of unique active wallet addresses from the DB
+   */
+  get_active_users: (options?: MethodOptions) => Promise<AssembledTransaction<Array<string>>>
+
+  /**
+   * Construct and simulate a get_platform_activity transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
+   * Read the exact global log of recent Platform evaluations from the DB
+   */
+  get_platform_activity: (options?: MethodOptions) => Promise<AssembledTransaction<Array<LoanEvaluation>>>
+
 }
 export class Client extends ContractClient {
   static async deploy<T = Client>(
@@ -131,8 +143,10 @@ export class Client extends ContractClient {
         "AAAAAAAAAAAAAAALZ2V0X2hpc3RvcnkAAAAAAQAAAAAAAAAEdXNlcgAAABMAAAABAAAD6gAAB9AAAAAOTG9hbkV2YWx1YXRpb24AAA==",
         "AAAAAAAAAAAAAAAMZ2V0X3R4X2NvdW50AAAAAAAAAAEAAAAG",
         "AAAAAAAAAFdSZWFkIHRoZSB0b3RhbCBudW1iZXIgb2YgbWF0aGVtYXRpY2FsbHkgdW5pcXVlIHdhbGxldHMgKGFjdGl2ZSB1c2VycykgZnJvbSB0aGUgZGF0YWJhc2UAAAAADmdldF91c2VyX2NvdW50AAAAAAAAAAAAAQAAAAY=",
+        "AAAAAAAAAEFSZWFkIHRoZSBleGFjdCBsaXN0IG9mIHVuaXF1ZSBhY3RpdmUgd2FsbGV0IGFkZHJlc3NlcyBmcm9tIHRoZSBEQgAAAAAAABBnZXRfYWN0aXZlX3VzZXJzAAAAAAAAAAEAAAPqAAAAEw==",
         "AAAAAgAAACxFbXBsb3ltZW50IHR5cGUgYWZmZWN0cyB0aGUgc2FmZXR5IHRocmVzaG9sZAAAAAAAAAAORW1wbG95bWVudFR5cGUAAAAAAAIAAAAAAAAAAAAAAAhTYWxhcmllZAAAAAAAAAAAAAAADFNlbGZFbXBsb3llZA==",
-        "AAAAAQAAAD9GdWxsIGxvYW4gc2FmZXR5IGV2YWx1YXRpb24gcmVzdWx0IOKAlCBzdG9yZWQgb24tY2hhaW4gcGVyIHVzZXIAAAAAAAAAAA5Mb2FuRXZhbHVhdGlvbgAAAAAADwAAAAAAAAAGYWR2aWNlAAAAAAfQAAAABkFkdmljZQAAAAAAAAAAABFkaXNwb3NhYmxlX2luY29tZQAAAAAAAAcAAAAAAAAAFWRpc3Bvc2FibGVfcGN0X3NjYWxlZAAAAAAAAAcAAAAAAAAADmR0aV9wY3Rfc2NhbGVkAAAAAAAGAAAAAAAAAAplbXBsb3ltZW50AAAAAAfQAAAADkVtcGxveW1lbnRUeXBlAAAAAAAAAAAADWV4aXN0aW5nX2VtaXMAAAAAAAAGAAAAAAAAAAhleHBlbnNlcwAAAAYAAAAAAAAABmluY29tZQAAAAAABgAAAAAAAAAPbGVkZ2VyX3NlcXVlbmNlAAAAAAQAAAAAAAAAB25ld19lbWkAAAAABgAAAAAAAAARc3RyZXNzX2Rpc3Bvc2FibGUAAAAAAAAHAAAAAAAAABVzdHJlc3NfZHRpX3BjdF9zY2FsZWQAAAAAAAAGAAAAAAAAAA1zdHJlc3NfaW5jb21lAAAAAAAABgAAAAAAAAAJdGltZXN0YW1wAAAAAAAABgAAAAAAAAAEdXNlcgAAABM=" ]),
+        "AAAAAQAAAD9GdWxsIGxvYW4gc2FmZXR5IGV2YWx1YXRpb24gcmVzdWx0IOKAlCBzdG9yZWQgb24tY2hhaW4gcGVyIHVzZXIAAAAAAAAAAA5Mb2FuRXZhbHVhdGlvbgAAAAAADwAAAAAAAAAGYWR2aWNlAAAAAAfQAAAABkFkdmljZQAAAAAAAAAAABFkaXNwb3NhYmxlX2luY29tZQAAAAAAAAcAAAAAAAAAFWRpc3Bvc2FibGVfcGN0X3NjYWxlZAAAAAAAAAcAAAAAAAAADmR0aV9wY3Rfc2NhbGVkAAAAAAAGAAAAAAAAAAplbXBsb3ltZW50AAAAAAfQAAAADkVtcGxveW1lbnRUeXBlAAAAAAAAAAAADWV4aXN0aW5nX2VtaXMAAAAAAAAGAAAAAAAAAAhleHBlbnNlcwAAAAYAAAAAAAAABmluY29tZQAAAAAABgAAAAAAAAAPbGVkZ2VyX3NlcXVlbmNlAAAAAAQAAAAAAAAAB25ld19lbWkAAAAABgAAAAAAAAARc3RyZXNzX2Rpc3Bvc2FibGUAAAAAAAAHAAAAAAAAABVzdHJlc3NfZHRpX3BjdF9zY2FsZWQAAAAAAAAGAAAAAAAAAA1zdHJlc3NfaW5jb21lAAAAAAAABgAAAAAAAAAJdGltZXN0YW1wAAAAAAAABgAAAAAAAAAEdXNlcgAAABM=",
+        "AAAAAAAAAERSZWFkIHRoZSBleGFjdCBnbG9iYWwgbG9nIG9mIHJlY2VudCBQbGF0Zm9ybSBldmFsdWF0aW9ucyBmcm9tIHRoZSBEQgAAABVnZXRfcGxhdGZvcm1fYWN0aXZpdHkAAAAAAAAAAAAAAQAAA+oAAAfQAAAADkxvYW5FdmFsdWF0aW9uAAA=" ]),
       options
     )
   }
@@ -142,6 +156,8 @@ export class Client extends ContractClient {
         evaluate: this.txFromJSON<LoanEvaluation>,
         get_history: this.txFromJSON<Array<LoanEvaluation>>,
         get_tx_count: this.txFromJSON<u64>,
-        get_user_count: this.txFromJSON<u64>
+        get_user_count: this.txFromJSON<u64>,
+        get_active_users: this.txFromJSON<Array<string>>,
+        get_platform_activity: this.txFromJSON<Array<LoanEvaluation>>
   }
 }

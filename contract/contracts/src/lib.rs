@@ -57,6 +57,8 @@ pub struct LoanEvaluation {
 const HISTORY_MAP: soroban_sdk::Symbol = symbol_short!("HIST_MAP");
 const TX_COUNT: soroban_sdk::Symbol = symbol_short!("TX_CNT");
 const USER_COUNT: soroban_sdk::Symbol = symbol_short!("USER_CNT");
+const GLOBAL_USERS: soroban_sdk::Symbol = symbol_short!("G_USERS");
+const GLOBAL_ACTIVITY: soroban_sdk::Symbol = symbol_short!("G_ACT");
 
 // ─── Contract ─────────────────────────────────────────────────────────────────
 
@@ -154,23 +156,30 @@ impl TrustLoanSafety {
             .persistent()
             .extend_ttl(&HISTORY_MAP, LEDGER_BUMP, LEDGER_BUMP);
 
-        // 8. Global database counters
+        // 8. Global database counters & lists for exact UI retrieval
         let count: u64 = env.storage().instance().get(&TX_COUNT).unwrap_or(0u64);
         env.storage().instance().set(&TX_COUNT, &(count + 1));
 
         if is_new_user {
              let unique_users: u64 = env.storage().instance().get(&USER_COUNT).unwrap_or(0u64);
              env.storage().instance().set(&USER_COUNT, &(unique_users + 1));
+
+             let mut global_users_arr: Vec<Address> = env.storage().instance().get(&GLOBAL_USERS).unwrap_or(Vec::new(&env));
+             global_users_arr.push_back(user.clone());
+             env.storage().instance().set(&GLOBAL_USERS, &global_users_arr);
         }
 
-        let advice_u32: u32 = match advice {
-            Advice::Safe      => 0,
-            Advice::Caution   => 1,
-            Advice::DoNotTake => 2,
-        };
+        // Push to global activity DB feed (maintain last 20 records)
+        let mut global_activity_arr: Vec<LoanEvaluation> = env.storage().instance().get(&GLOBAL_ACTIVITY).unwrap_or(Vec::new(&env));
+        global_activity_arr.push_back(evaluation.clone());
+        if global_activity_arr.len() > 20 {
+             global_activity_arr.pop_front();
+        }
+        env.storage().instance().set(&GLOBAL_ACTIVITY, &global_activity_arr);
+
         env.events().publish(
-            (symbol_short!("loan_eval"), advice_u32),
-            (dti_pct_scaled, disposable_pct_scaled, stress_disposable),
+            (symbol_short!("loan_eval"), user.clone()),
+            dti_pct_scaled,
         );
 
         evaluation
@@ -193,6 +202,22 @@ impl TrustLoanSafety {
     /// Read the total number of mathematically unique wallets (active users) from the database
     pub fn get_user_count(env: Env) -> u64 {
         env.storage().instance().get(&USER_COUNT).unwrap_or(0u64)
+    }
+
+    /// Read the exact list of unique active wallet addresses from the DB
+    pub fn get_active_users(env: Env) -> Vec<Address> {
+        env.storage().instance().get(&GLOBAL_USERS).unwrap_or(Vec::new(&env))
+    }
+
+    /// Read the exact global log of recent Platform evaluations from the DB
+    pub fn get_platform_activity(env: Env) -> Vec<LoanEvaluation> {
+        let mut activities: Vec<LoanEvaluation> = env.storage().instance().get(&GLOBAL_ACTIVITY).unwrap_or(Vec::new(&env));
+        // Reverse so newest is first
+        let mut reversed = Vec::new(&env);
+        while let Some(item) = activities.pop_back() {
+            reversed.push_back(item);
+        }
+        reversed
     }
 
     /// Pure DTI utility — call via simulation (no auth, no state change).

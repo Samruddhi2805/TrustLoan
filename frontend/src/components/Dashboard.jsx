@@ -11,27 +11,38 @@ export default function Dashboard({ account, history }) {
 
   const [globalActivity, setGlobalActivity] = useState([]);
 
+  const [activeWallets, setActiveWallets] = useState([]);
+
   useEffect(() => {
     async function fetchDatabaseMetrics() {
       try {
         const { Client } = await import('trustloan');
         const dbClient = new Client({
             networkPassphrase: "Test SDF Network ; September 2015",
-            contractId: "CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX",
+            contractId: "CDOLUZMCCZODFA43Z4SJWKGOBBLUCGTDBRAMAKSWKNCZP6KLOF6TLTWB",
             rpcUrl: "https://soroban-testnet.stellar.org:443"
         });
 
-        // Query the Rust Database directly
+        // Query the Rust Database directly for counters
         const userRes = await dbClient.get_user_count();
         setActiveUsersFromDB(Number(userRes.result || 0));
         
         const txRes = await dbClient.get_tx_count();
         setTxCountFromDB(Number(txRes.result || 0));
+
+        // Query the Rust Database directly for explicit Arrays
+        const activeUsersArr = await dbClient.get_active_users();
+        setActiveWallets(activeUsersArr.result || []);
+
+        const activityArr = await dbClient.get_platform_activity();
+        setGlobalActivity(activityArr.result || []);
       } catch (err) {
         console.error("Rust DB Fetch Error:", err);
       }
     }
     fetchDatabaseMetrics();
+    const interval = setInterval(fetchDatabaseMetrics, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -40,21 +51,15 @@ export default function Dashboard({ account, history }) {
     const fetchIndexer = async () => {
       setIndexingActive(true);
       
-      // FETCH 1: Connected User's direct history from Horizon
+      // FETCH 1: Connected User's direct history from Horizon ONLY
       const userHistoryUrl = `https://horizon-testnet.stellar.org/accounts/${account}/payments?limit=30&order=desc`;
       
-      // FETCH 2: Real-time Platform Contract Invocations directly traversing the Soroban DB interactions
-      const CONTRACT_ACCOUNT = 'CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX';
-      const globalSourceUrl = `https://horizon-testnet.stellar.org/accounts/${CONTRACT_ACCOUNT}/transactions?limit=30&order=desc`;
-
       try {
-        const [userData, globalData] = await Promise.all([
-          fetch(userHistoryUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } })),
-          fetch(globalSourceUrl).then(r => r.ok ? r.json() : { _embedded: { records: [] } }).catch(() => ({ _embedded: { records: [] } }))
-        ]);
+        const userRes = await fetch(userHistoryUrl);
+        const userData = userRes.ok ? await userRes.json() : { _embedded: { records: [] } };
 
         // Handle User Indexer
-        const userRecords = userData._embedded.records;
+        const userRecords = userData._embedded.records || [];
         const userTxPromises = userRecords.map(r => fetch(r._links.transaction.href).then(res => res.json()).catch(() => null));
         const userTxs = await Promise.all(userTxPromises);
         
@@ -70,18 +75,6 @@ export default function Dashboard({ account, history }) {
             };
           });
         setIndexedData(userFormatted);
-
-        // Handle Global Platform Indexer directly from Blockchain DB traces
-        const globalRecords = globalData._embedded.records;
-        const globalFormatted = globalRecords
-          .filter(tx => tx && tx.source_account)
-          .map(tx => ({
-             hash: tx.hash,
-             timestamp: tx.created_at,
-             source: tx.source_account
-          }));
-
-        setGlobalActivity(globalFormatted);
       } catch (err) {
         console.error("Indexing failed", err);
       } finally {
@@ -90,7 +83,7 @@ export default function Dashboard({ account, history }) {
     };
 
     fetchIndexer();
-    const indexInterval = setInterval(fetchIndexer, 15000); // Live poll every 15s
+    const indexInterval = setInterval(fetchIndexer, 15000);
     return () => clearInterval(indexInterval);
   }, [account]);
 
@@ -310,20 +303,20 @@ export default function Dashboard({ account, history }) {
               <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2.5 py-1 rounded-full animate-pulse border border-emerald-500/30">SCALING LIVE</span>
            </div>
            <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-2">
-              {globalActivity.length === 0 ? (
+              {activeWallets.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3 opacity-50">
                   <Users className="w-10 h-10 text-gray-500" />
                   <p className="text-sm font-medium">Waiting for network activity...</p>
                   <p className="text-xs text-gray-600">Connect a wallet and check eligibility to appear in the live feed.</p>
                 </div>
               ) : (
-                globalActivity.map((item, idx) => (
+                activeWallets.map((walletAddr, idx) => (
                   <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/5 hover:border-accent-teal/30 transition-all group">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center text-[10px] font-mono group-hover:from-accent-teal/30 group-hover:to-accent-violet/30">
                           {idx + 1}
                         </div>
-                        <span className="font-mono text-xs text-gray-400 group-hover:text-gray-200">{item.source.slice(0, 10)}...{item.source.slice(-10)}</span>
+                        <span className="font-mono text-xs text-gray-400 group-hover:text-gray-200">{walletAddr.slice(0, 10)}...{walletAddr.slice(-10)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
@@ -344,7 +337,7 @@ export default function Dashboard({ account, history }) {
               </div>
               <div className="flex items-center gap-2">
                  <div className="w-2 h-2 rounded-full bg-rose-500 animate-ping"></div>
-                 <span className="text-xs text-rose-400 uppercase tracking-widest font-black">Live</span>
+                 <span className="text-xs text-rose-400 uppercase tracking-widest font-black">Soroban DB</span>
               </div>
            </div>
            <div className="flex-1 p-5 overflow-y-auto space-y-4">
@@ -353,19 +346,19 @@ export default function Dashboard({ account, history }) {
                   <Globe className="w-12 h-12 text-gray-700" />
                   <div>
                     <p className="font-bold text-gray-400">Platform-wide Indexing Active</p>
-                    <p className="text-xs text-gray-600 mt-1">Watching for recent DTI checks on the network...</p>
+                    <p className="text-xs text-gray-600 mt-1">Watching for recent DTI checks on the DB...</p>
                   </div>
                 </div>
               ) : (
                 globalActivity.map((item, idx) => (
                   <div key={idx} className="p-3 rounded-xl bg-white/5 border border-glass-border/30 flex items-center justify-between">
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-gray-500 uppercase">TX HASH</span>
-                      <span className="text-xs font-mono text-accent-cyan">{item.hash.slice(0, 12)}...</span>
+                      <span className="text-[10px] text-gray-500 uppercase">EVALUATION ({(Number(item.dti_pct_scaled) / 100).toFixed(2)}%)</span>
+                      <span className="text-xs font-mono text-accent-cyan">{item.user.slice(0, 12)}...</span>
                     </div>
                     <div className="text-right">
                       <span className="text-[10px] text-gray-500 uppercase">TIME</span>
-                      <p className="text-xs text-gray-300">{new Date(item.timestamp).toLocaleTimeString()}</p>
+                      <p className="text-xs text-gray-300">{new Date(Number(item.timestamp) * 1000).toLocaleTimeString()}</p>
                     </div>
                   </div>
                 ))

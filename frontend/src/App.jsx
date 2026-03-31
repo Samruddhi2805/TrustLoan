@@ -104,7 +104,7 @@ function App() {
            const { Client } = await import('trustloan');
            const client = new Client({
               networkPassphrase: Networks.TESTNET,
-              contractId: "CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX",
+              contractId: "CDOLUZMCCZODFA43Z4SJWKGOBBLUCGTDBRAMAKSWKNCZP6KLOF6TLTWB",
               rpcUrl: "https://soroban-testnet.stellar.org:443"
            });
            const userRes = await client.get_user_count();
@@ -149,7 +149,7 @@ function App() {
         const { Client } = await import('trustloan');
         const client = new Client({
             networkPassphrase: Networks.TESTNET,
-            contractId: "CCSERNKJA2NADIH3NSJZTVOZ5BMZD475ED3NKNPYETNU7374G4QHK7WX",
+            contractId: "CDOLUZMCCZODFA43Z4SJWKGOBBLUCGTDBRAMAKSWKNCZP6KLOF6TLTWB",
             rpcUrl: "https://soroban-testnet.stellar.org:443",
             publicKey: publicKey
         });
@@ -220,10 +220,6 @@ function App() {
             setAccount((prev) => {
               if (prev !== address) {
                 setContract(prepareStellarTransaction(address));
-                // If they automatically connected on page load, register them
-                registerActiveUser(address).then(() => {
-                  fetchSharedUserCount().then(setActiveUserCount);
-                });
               }
               return address;
             });
