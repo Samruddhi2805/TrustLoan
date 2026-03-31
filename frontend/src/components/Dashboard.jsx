@@ -110,11 +110,11 @@ export default function Dashboard({ account, history, activeUserCount }) {
         <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-glass-border/30 bg-black/10">
           <div className="p-6 text-center">
             <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">Total Active Users</h4>
-            <p className="text-4xl font-bold text-white">{activeUserCount || 34}</p>
+            <p className="text-4xl font-bold text-white">{activeUserCount}</p>
           </div>
           <div className="p-6 text-center">
             <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">Platform Transactions</h4>
-            <p className="text-4xl font-bold text-accent-cyan">{(activeUserCount || 34) * 3 + 12}</p>
+            <p className="text-4xl font-bold text-accent-cyan">{activeUserCount * 3}</p>
           </div>
           <div className="p-6 text-center">
             <h4 className="text-sm text-gray-400 uppercase tracking-widest mb-1">30x Retention Rate</h4>
