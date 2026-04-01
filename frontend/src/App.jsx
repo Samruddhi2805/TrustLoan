@@ -70,35 +70,40 @@ export function evaluateEligibility(income, existingEMIs, newEMI, expenses = 0) 
   if (netCashFlow < 0 || dti > 0.60) {
     status = 'REJECTED';
     if (netCashFlow < 0) {
-      reason = `Rejected because Net Cash Flow is negative (₹${ncfStr}). Outflows exceed your income.`;
+      reason = `Rejected because Net Cash Flow is negative (₹${ncfStr}). Total outflows exceed your monthly income.`;
     } else {
-      reason = `Rejected because DTI is ${dtiPct}%, which exceeds the maximum limit of 60%.`;
+      reason = `Rejected because DTI is ${dtiPct}%, which exceeds the absolute limit of 60%.`;
     }
   } 
-  // 2. Risk Zone: DTI 40–60% OR Disposable < 20%
+  // 2. Risky / Risk Zone
   else if ((dti >= 0.40 && dti <= 0.60) || disposablePct < 20) {
     status = 'RISKY';
-    if (dti >= 0.40) {
-      reason = `Risky status because DTI is ${dtiPct}% (Safe <40%, Risky 40–60%).`;
+    const riskReasons = [];
+    if (dti >= 0.40 && dti <= 0.60) riskReasons.push(`DTI is in the moderate range (${dtiPct}%)`);
+    if (disposablePct < 20) riskReasons.push(`disposable income is low (${dispStr}%)`);
+
+    if (riskReasons.length === 2) {
+      reason = `Risky because ${riskReasons[0]} and ${riskReasons[1]}, reducing financial safety margin.`;
+    } else if (dti >= 0.40) {
+      reason = `Risky status because DTI is ${dtiPct}% (Safe threshold is <40%).`;
     } else {
-      reason = `Risky status because Disposable Income is ${dispStr}% (Safe threshold: 20%).`;
+      // Disposable income < 20
+      if (disposablePct < 10) {
+        reason = `Risky because Net Cash Flow is critically low (${dispStr}% of income), despite a safe DTI ratio.`;
+      } else {
+        reason = `Risky status because Disposable Income is ${dispStr}% (Safe threshold is ≥20%).`;
+      }
     }
   }
   // 3. Approval: DTI < 40% AND Disposable ≥ 20% AND Net Cash Flow > 0
   else if (dti < 0.40 && disposablePct >= 20 && netCashFlow > 0) {
-    // Conflict handling: DTI acceptable (<0.40) but Net Cash Flow low (< 10% of income)
-    if (netCashFlowPct < 10) {
-       status = 'RISKY';
-       reason = `Marked as Risky instead of Approved because Net Cash Flow is low (${dispStr}% of income), despite healthy DTI.`;
-    } else {
-       status = 'APPROVED';
-       reason = `Approved because DTI is ${dtiPct}%, disposable income is ${dispStr}%, and net cash flow is positive.`;
-    }
+     status = 'APPROVED';
+     reason = `Approved because DTI is ${dtiPct}%, disposable income is ${dispStr}%, and net cash flow is positive.`;
   }
   // Fallback
   else {
     status = 'REJECTED';
-    reason = `Rejected based on structured decision metrics (DTI: ${dtiPct}%, Disposable: ${dispStr}%).`;
+    reason = `Rejected based on structured decision engine (DTI: ${dtiPct}%, Disposable Income: ${dispStr}%).`;
   }
 
   return { status, reason, dti, disposablePct, netCashFlow, netCashFlowPct };
