@@ -206,6 +206,134 @@ Collected via **[Google Form](https://forms.gle/RnorBqa3w2jFYK3t5)**, exported t
 
 ---
 
+Good. You’re thinking about presentation now—which is what actually gets you marks.
+
+Don’t improvise this. Use a clean, structured README section like below and paste it directly.
+
+---
+
+## 📊 Decision Logic Validation
+
+This system was tested across three scenarios to validate the correctness and robustness of the loan decision engine. The model uses a multi-factor approach based on **DTI (Debt-to-Income Ratio), Disposable Income, and Net Cash Flow**.
+
+---
+
+### ✅ Test Case 1 — Approved (Safe Scenario)
+
+**Inputs:**
+
+* Monthly Income: ₹75,000
+* Existing EMIs: ₹10,000
+* Monthly Expenses: ₹25,000
+* Loan Amount: ₹5,00,000
+* Interest Rate: 12%
+* Tenure: 36 months
+
+**Output:**
+
+* DTI: 35.5%
+* Disposable Income: 31.2%
+* Net Cash Flow: ₹23,393
+* Decision: **APPROVED**
+
+
+  **Screenshot**
+*<img width="1918" height="1017" alt="trsutloan approved" src="https://github.com/user-attachments/assets/cb7d674b-8856-414c-a06d-7904a9a39105" />
+
+
+**Explanation:**
+The applicant has a low DTI (<40%), sufficient disposable income (>20%), and strong positive cash flow. This indicates high repayment capacity and low financial risk.
+
+**What this validates:**
+The system correctly approves financially stable applicants.
+
+---
+
+### ⚠️ Test Case 2 — Risky (Borderline Scenario)
+
+**Inputs:**
+
+* Monthly Income: ₹50,000
+* Existing EMIs: ₹15,000
+* Monthly Expenses: ₹20,000
+* Loan Amount: ₹2,50,000
+* Interest Rate: 12%
+* Tenure: 36 months
+
+**Output:**
+
+* DTI: 46.6%
+* Disposable Income: 13.4%
+* Net Cash Flow: ₹6,696
+* Decision: **RISKY**
+  
+
+   **Screenshot**
+*<img width="1918" height="1012" alt="trsutloan Risky" src="https://github.com/user-attachments/assets/45e92800-f9d8-4f4a-987b-0b3e7977e8f9" />
+
+
+**Explanation:**
+The DTI falls in the moderate risk range (40–60%), and disposable income is low (<20%), indicating limited financial buffer. Although cash flow is positive, the margin of safety is reduced.
+
+**What this validates:**
+The system identifies borderline cases and avoids over-approving risky applicants.
+
+---
+
+### ❌ Test Case 3 — Rejected (Failure Scenario)
+
+**Inputs:**
+
+* Monthly Income: ₹30,000
+* Existing EMIs: ₹20,000
+* Monthly Expenses: ₹15,000
+* Loan Amount: ₹2,00,000
+* Interest Rate: 12%
+* Tenure: 12 months
+
+**Output:**
+
+* DTI: 125.9%
+* Disposable Income: -75.9%
+* Net Cash Flow: -₹22,770
+* Decision: **REJECTED**
+  
+
+  **Screenshot**
+*<img width="1918" height="1017" alt="trsutloan rejected" src="https://github.com/user-attachments/assets/b957efcb-0f04-451f-b3f2-1f97313dd8d8" />
+
+
+**Explanation:**
+The applicant has extremely high debt obligations and negative cash flow. Total outflows exceed income, making repayment impossible.
+
+**What this validates:**
+The system correctly rejects financially unsafe scenarios.
+
+---
+
+## 🧠 Decision Model Summary
+
+The system uses a rule-based decision hierarchy:
+
+* **Approve:**
+  DTI < 40% AND Disposable Income ≥ 20% AND Net Cash Flow > 0
+
+* **Risky:**
+  DTI between 40–60% OR Disposable Income < 20%
+
+* **Reject:**
+  DTI > 60% OR Net Cash Flow < 0
+
+This ensures decisions are not based on a single metric but on a combination of financial indicators.
+
+---
+
+## 🎯 Key Insight
+
+Unlike basic calculators, this system evaluates both **debt burden (DTI)** and **real affordability (cash flow + expenses)**, making the decision process more realistic and interpretable.
+
+---
+
 ## 🔄 Future Improvements (Based on User Feedback)
 
 Based on user responses and platform analysis, the following improvements are planned:
