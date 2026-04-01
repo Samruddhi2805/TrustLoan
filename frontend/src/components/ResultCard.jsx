@@ -18,7 +18,7 @@ function StatRow({ label, value, badge }) {
 }
 
 const STATUS_CONFIG = {
-  APPROVE: {
+  APPROVED: {
     icon: <CheckCircle className="w-10 h-10 text-emerald-400" />,
     bg: 'bg-emerald-500/20',
     border: 'border-t-emerald-500',
@@ -27,7 +27,7 @@ const STATUS_CONFIG = {
     boxText: 'text-emerald-300',
     label: 'APPROVED',
   },
-  CONDITIONAL: {
+  RISKY: {
     icon: <AlertCircle className="w-10 h-10 text-amber-400" />,
     bg: 'bg-amber-500/20',
     border: 'border-t-amber-500',
@@ -36,7 +36,7 @@ const STATUS_CONFIG = {
     boxText: 'text-amber-300',
     label: 'RISKY',
   },
-  REJECT: {
+  REJECTED: {
     icon: <XCircle className="w-10 h-10 text-rose-400" />,
     bg: 'bg-rose-500/20',
     border: 'border-t-rose-500',
@@ -74,7 +74,7 @@ export default function ResultCard({ result }) {
 
         {/* Status Header */}
         <div className="flex flex-col items-center text-center space-y-3">
-          <div className={`w-16 h-16 rounded-full ${cfg.bg} flex items-center justify-center ${result.status === 'APPROVE' ? 'animate-[pulseGlow_2s_infinite]' : ''}`}>
+          <div className={`w-16 h-16 rounded-full ${cfg.bg} flex items-center justify-center ${result.status === 'APPROVED' ? 'animate-[pulseGlow_2s_infinite]' : ''}`}>
             {cfg.icon}
           </div>
           <h3 className={`text-2xl font-extrabold tracking-tight ${cfg.textColor}`}>
@@ -115,11 +115,11 @@ export default function ResultCard({ result }) {
         {/* Decision Reason */}
         <div className={`p-4 rounded-xl border ${cfg.boxBg} ${cfg.boxText} text-sm`}>
           <p className="flex items-center gap-2 font-bold mb-2">
-            {result.status === 'APPROVE' && <CheckCircle className="w-4 h-4" />}
-            {result.status === 'CONDITIONAL' && <AlertCircle className="w-4 h-4" />}
-            {result.status === 'REJECT' && <XCircle className="w-4 h-4" />}
-            {result.status === 'APPROVE' ? 'Why you were approved' :
-             result.status === 'CONDITIONAL' ? 'Why this is flagged as Risky' :
+            {result.status === 'APPROVED' && <CheckCircle className="w-4 h-4" />}
+            {result.status === 'RISKY' && <AlertCircle className="w-4 h-4" />}
+            {result.status === 'REJECTED' && <XCircle className="w-4 h-4" />}
+            {result.status === 'APPROVED' ? 'Why you were approved' :
+             result.status === 'RISKY' ? 'Why this is flagged as Risky' :
              'Why you were not approved'}
           </p>
           <p className="leading-relaxed">

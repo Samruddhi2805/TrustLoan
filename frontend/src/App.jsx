@@ -28,11 +28,11 @@ export function calculateDTI(existingEMIs, newEMI, income) {
 }
 
 /**
- * Disposable % = (Income – Existing EMIs – New EMI) / Income × 100
+ * Disposable Income % = (Net Cash Flow / Monthly Income) * 100
  */
-export function calculateDisposablePct(income, existingEMIs, newEMI) {
+export function calculateDisposablePct(income, netCashFlow) {
   if (income <= 0) return 0;
-  return ((income - existingEMIs - newEMI) / income) * 100;
+  return (netCashFlow / income) * 100;
 }
 
 /**
@@ -43,27 +43,22 @@ export function calculateNetCashFlow(income, existingEMIs, newEMI, expenses) {
 }
 
 // ─── Structured Decision Engine ──────────────────────────────────────────────
-// Tier 1 – Hard Reject:   Net Cash Flow < 0  OR  DTI > 0.60
-// Tier 2 – Risk Zone:     DTI 0.40–0.60  OR  Disposable < 20%
-// Tier 3 – Approved:      DTI < 0.40  AND  Disposable ≥ 20%  AND  NCF > 0
-// Conflict override:      DTI < 0.40 but NCF < 10% of income → RISKY
+// Final Status: APPROVED / RISKY / REJECTED
 
 export function evaluateEligibility(income, existingEMIs, newEMI, expenses = 0) {
-  if (income <= 0) {
+  // Edge Case: Division by zero and very low income inputs
+  if (income <= 100) {
     return {
-      status: 'REJECT',
-      reason: 'Income must be greater than zero.',
-      dti: Infinity,
-      disposablePct: 0,
-      netCashFlow: 0,
-      netCashFlowPct: 0,
+      status: 'REJECTED',
+      reason: 'Monthly income is too low for a reliable eligibility check.',
+      dti: 0, disposablePct: 0, netCashFlow: 0, netCashFlowPct: 0
     };
   }
 
   const dti            = calculateDTI(existingEMIs, newEMI, income);
-  const disposablePct  = calculateDisposablePct(income, existingEMIs, newEMI);
   const netCashFlow    = calculateNetCashFlow(income, existingEMIs, newEMI, expenses);
-  const netCashFlowPct = (netCashFlow / income) * 100;
+  const disposablePct  = calculateDisposablePct(income, netCashFlow);
+  const netCashFlowPct = disposablePct; // same thing by definition here
 
   const dtiPct  = (dti * 100).toFixed(1);
   const dispStr = disposablePct.toFixed(1);
@@ -71,36 +66,39 @@ export function evaluateEligibility(income, existingEMIs, newEMI, expenses = 0) 
 
   let status, reason;
 
-  // ── Tier 1: Hard Reject ───────────────────────────────────────────────────
-  if (netCashFlow < 0) {
-    status = 'REJECT';
-    reason = `Rejected because your net cash flow is negative (₹${ncfStr}). After paying all EMIs and expenses, you'd have nothing left — this loan is not serviceable.`;
-  } else if (dti > 0.60) {
-    status = 'REJECT';
-    reason = `Rejected because your DTI is ${dtiPct}%, which exceeds the hard limit of 60%. This indicates your total EMI burden is too high relative to your income.`;
-
-  // ── Tier 2: Risk Zone ─────────────────────────────────────────────────────
-  } else if (dti >= 0.40 && dti <= 0.60) {
-    status = 'CONDITIONAL';
-    reason = `Flagged as Risky — your DTI is ${dtiPct}% (safe threshold: <40%, risky: 40–60%). A lender may review this further. Your disposable income is ${dispStr}% and net cash flow is ₹${ncfStr}.`;
-  } else if (disposablePct < 20) {
-    status = 'CONDITIONAL';
-    reason = `Flagged as Risky — your disposable income is only ${dispStr}%, which is below the safe threshold of 20%. This means there is limited financial buffer after EMI payments.`;
-
-  // ── Tier 3: Conflict Check ────────────────────────────────────────────────
-  } else if (dti < 0.40 && disposablePct >= 20 && netCashFlowPct < 10) {
-    status = 'CONDITIONAL';
-    reason = `Flagged as Risky — although your DTI is a healthy ${dtiPct}%, your net cash flow (₹${ncfStr}) is less than 10% of your income after all outflows. This leaves very little financial cushion.`;
-
-  // ── Tier 3: Approved ──────────────────────────────────────────────────────
-  } else if (dti < 0.40 && disposablePct >= 20 && netCashFlow > 0) {
-    status = 'APPROVE';
-    reason = `Approved because DTI is ${dtiPct}% (safe: <40%), disposable income is ${dispStr}%, and net cash flow is positive (₹${ncfStr}). Your financial profile comfortably supports this loan.`;
-
-  // ── Fallback ──────────────────────────────────────────────────────────────
-  } else {
-    status = 'REJECT';
-    reason = `Rejected — DTI is ${dtiPct}%, disposable income is ${dispStr}%, and net cash flow is ₹${ncfStr}. One or more metrics fell outside the acceptable range.`;
+  // 1. Hard Reject: Net Cash Flow < 0 OR DTI > 0.60
+  if (netCashFlow < 0 || dti > 0.60) {
+    status = 'REJECTED';
+    if (netCashFlow < 0) {
+      reason = `Rejected because Net Cash Flow is negative (₹${ncfStr}). Outflows exceed your income.`;
+    } else {
+      reason = `Rejected because DTI is ${dtiPct}%, which exceeds the maximum limit of 60%.`;
+    }
+  } 
+  // 2. Risk Zone: DTI 40–60% OR Disposable < 20%
+  else if ((dti >= 0.40 && dti <= 0.60) || disposablePct < 20) {
+    status = 'RISKY';
+    if (dti >= 0.40) {
+      reason = `Risky status because DTI is ${dtiPct}% (Safe <40%, Risky 40–60%).`;
+    } else {
+      reason = `Risky status because Disposable Income is ${dispStr}% (Safe threshold: 20%).`;
+    }
+  }
+  // 3. Approval: DTI < 40% AND Disposable ≥ 20% AND Net Cash Flow > 0
+  else if (dti < 0.40 && disposablePct >= 20 && netCashFlow > 0) {
+    // Conflict handling: DTI acceptable (<0.40) but Net Cash Flow low (< 10% of income)
+    if (netCashFlowPct < 10) {
+       status = 'RISKY';
+       reason = `Marked as Risky instead of Approved because Net Cash Flow is low (${dispStr}% of income), despite healthy DTI.`;
+    } else {
+       status = 'APPROVED';
+       reason = `Approved because DTI is ${dtiPct}%, disposable income is ${dispStr}%, and net cash flow is positive.`;
+    }
+  }
+  // Fallback
+  else {
+    status = 'REJECTED';
+    reason = `Rejected based on structured decision metrics (DTI: ${dtiPct}%, Disposable: ${dispStr}%).`;
   }
 
   return { status, reason, dti, disposablePct, netCashFlow, netCashFlowPct };

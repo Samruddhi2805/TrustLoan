@@ -15,9 +15,9 @@ function usePreview(formData) {
 
     const newEMI       = calculateEMI(loanAmount, interestRate, tenure);
     const dti          = calculateDTI(existingEMIs, newEMI, income);
-    const disposablePct = calculateDisposablePct(income, existingEMIs, newEMI);
     const netCashFlow  = calculateNetCashFlow(income, existingEMIs, newEMI, monthlyExpenses);
-    const netCashFlowPct = (netCashFlow / income) * 100;
+    const disposablePct = calculateDisposablePct(income, netCashFlow);
+    const netCashFlowPct = disposablePct;
 
     return { newEMI, dti, disposablePct, netCashFlow, netCashFlowPct, monthlyExpenses };
   }, [formData]);
@@ -62,19 +62,16 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
   const ncfColor = !preview ? 'text-gray-400'
     : preview.netCashFlow > 0 ? 'text-blue-300' : 'text-rose-400';
 
-  // Verdict mirrors the decision engine hierarchy
   const verdict = !preview ? null
-    : preview.netCashFlow < 0
-      ? { text: '✗ REJECTED — Net cash flow is negative', cls: 'text-rose-400 bg-rose-500/10' }
-    : preview.dti > 0.60
-      ? { text: '✗ REJECTED — DTI exceeds hard limit of 60%', cls: 'text-rose-400 bg-rose-500/10' }
+    : (preview.netCashFlow < 0 || preview.dti > 0.60)
+      ? { text: '✗ REJECTED — Fails Hard Thresholds', cls: 'text-rose-400 bg-rose-500/10' }
     : (preview.dti >= 0.40 && preview.dti <= 0.60)
-      ? { text: '⚠ RISKY — DTI is in the 40–60% risk zone', cls: 'text-amber-400 bg-amber-500/10' }
+      ? { text: '⚠ RISKY — DTI in Risk Zone (40-60%)', cls: 'text-amber-400 bg-amber-500/10' }
     : preview.disposablePct < 20
-      ? { text: '⚠ RISKY — Disposable income below 20%', cls: 'text-amber-400 bg-amber-500/10' }
+      ? { text: '⚠ RISKY — Disposable Income below 20%', cls: 'text-amber-400 bg-amber-500/10' }
     : (preview.dti < 0.40 && preview.disposablePct >= 20 && preview.netCashFlowPct < 10)
-      ? { text: '⚠ RISKY — Net cash flow < 10% of income', cls: 'text-amber-400 bg-amber-500/10' }
-    : { text: '✓ APPROVED — DTI, disposable & cash flow all healthy', cls: 'text-emerald-400 bg-emerald-500/10' };
+      ? { text: '⚠ RISKY — Net Cash Flow < 10% of Income', cls: 'text-amber-400 bg-amber-500/10' }
+    : { text: '✓ APPROVED — Financial profile is healthy', cls: 'text-emerald-400 bg-emerald-500/10' };
 
   return (
     <div className="glass-card p-5 sm:p-8 w-full relative group shadow-2xl">
