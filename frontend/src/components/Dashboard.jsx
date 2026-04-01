@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { History, BarChart3, Clock, CheckCircle, XCircle, ExternalLink, Database, Search, Users, Activity, Globe } from 'lucide-react';
+import { History, BarChart3, Clock, CheckCircle, XCircle, ExternalLink, Database, Search, Users, Activity, Globe, AlertCircle } from 'lucide-react';
+import { evaluateEligibility } from '../App';
 
 export default function Dashboard({ account, history }) {
   const [indexedData, setIndexedData] = useState([]);
@@ -61,16 +62,27 @@ export default function Dashboard({ account, history }) {
         const histRes = await dbClient.get_history({ user: account });
         const records = histRes.result || [];
         // Map LoanEvaluation struct fields to display format
-        const formatted = records.map(ev => ({
-          dti: (Number(ev.dti_pct_scaled) / 100).toFixed(2),
-          disposable: (Number(ev.disposable_pct_scaled) / 100).toFixed(2),
-          advice: ev.advice?.tag ?? 'Unknown',
-          timestamp: Number(ev.timestamp) * 1000, // convert Unix seconds → ms
-          ledger: ev.ledger_sequence,
-          income: ev.income,
-          existing_emis: ev.existing_emis,
-          new_emi: ev.new_emi,
-        })).reverse(); // newest first
+        const formatted = records.map(ev => {
+          const income = Number(ev.income);
+          const existing_emis = Number(ev.existing_emis);
+          const new_emi = Number(ev.new_emi);
+          const expenses = Number(ev.expenses || 0);
+
+          // Single source of truth calculation
+          const evalRes = evaluateEligibility(income, existing_emis, new_emi, expenses);
+
+          return {
+            dti: (Number(ev.dti_pct_scaled) / 100).toFixed(1),
+            disposable: evalRes.disposablePct.toFixed(1), // Use refined formula
+            advice: evalRes.status, // Use updated status names
+            timestamp: Number(ev.timestamp) * 1000, // convert Unix seconds → ms
+            ledger: ev.ledger_sequence,
+            income,
+            existing_emis,
+            new_emi,
+            expenses,
+          };
+        }).reverse(); // newest first
         setIndexedData(formatted);
       } catch (err) {
         console.error("Soroban DB history fetch failed:", err);
@@ -190,17 +202,25 @@ export default function Dashboard({ account, history }) {
                       <span className="bg-black/30 px-2 py-1 rounded">{(item.dti * 100).toFixed(1)}%</span>
                     </td>
                     <td className="p-4">
-                      {item.status === 'APPROVE' ? (
+                      {item.status === 'APPROVED' ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                           <CheckCircle className="w-3.5 h-3.5" />
                           APPROVED
                         </span>
+                      ) : item.status === 'RISKY' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          RISKY
+                        </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">
                           <XCircle className="w-3.5 h-3.5" />
-                          {item.reason}
+                          REJECTED
                         </span>
                       )}
+                      <div className="text-[10px] text-gray-500 mt-1 max-w-[200px] leading-tight">
+                        {item.reason}
+                      </div>
                     </td>
                     <td className="p-4 text-xs font-mono text-gray-400">
                       <a 
@@ -269,17 +289,17 @@ export default function Dashboard({ account, history }) {
                       <span className="bg-black/30 px-2 py-1 rounded border border-accent-violet/30 text-accent-violet">{item.disposable}%</span>
                     </td>
                     <td className="p-4 text-xs font-bold uppercase tracking-wider">
-                      {item.advice === 'Safe' ? (
+                      {item.advice === 'APPROVED' ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                          <CheckCircle className="w-3 h-3" /> Safe
+                          <CheckCircle className="w-3 h-3" /> Approved
                         </span>
-                      ) : item.advice === 'Caution' ? (
+                      ) : item.advice === 'RISKY' ? (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                          ⚠ Caution
+                          ⚠ Risky
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                          <XCircle className="w-3 h-3" /> Do Not Take
+                          <XCircle className="w-3 h-3" /> Rejected
                         </span>
                       )}
                     </td>
