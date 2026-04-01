@@ -34,7 +34,7 @@ const STATUS_CONFIG = {
     textColor: 'text-amber-400',
     boxBg: 'bg-amber-500/10 border-amber-500/20',
     boxText: 'text-amber-300',
-    label: 'YOU MAY QUALIFY',
+    label: 'RISKY',
   },
   REJECT: {
     icon: <XCircle className="w-10 h-10 text-rose-400" />,
@@ -53,14 +53,20 @@ export default function ResultCard({ result }) {
   const cfg = STATUS_CONFIG[result.status] || STATUS_CONFIG.REJECT;
   const dtiPct = (result.dti * 100).toFixed(1);
   const dispPct = result.disposablePct?.toFixed(1) ?? '—';
+  const ncfPct  = result.netCashFlowPct?.toFixed(1) ?? null;
 
+  // DTI: <40% safe, 40–60% risky, >60% reject
   const dtiColor =
-    result.dti <= 0.55 ? 'text-emerald-400' :
-    result.dti <= 0.70 ? 'text-amber-400' : 'text-rose-400';
+    result.dti < 0.40 ? 'text-emerald-400' :
+    result.dti <= 0.60 ? 'text-amber-400' : 'text-rose-400';
 
+  // Disposable: ≥20% safe, <20% risky
   const dispColor =
     result.disposablePct >= 20 ? 'text-emerald-400' :
-    result.disposablePct >= 15 ? 'text-amber-400' : 'text-rose-400';
+    result.disposablePct >= 10 ? 'text-amber-400' : 'text-rose-400';
+
+  const ncfColor =
+    result.netCashFlow > 0 ? 'text-blue-300' : 'text-rose-400';
 
   return (
     <div className={`glass-card p-5 sm:p-8 h-full w-full border-t-4 shadow-2xl ${cfg.border}`}>
@@ -88,24 +94,22 @@ export default function ResultCard({ result }) {
           <StatRow
             label="DTI Ratio"
             value={<span className={dtiColor}>{dtiPct}%</span>}
-            badge="threshold: ≤55% | ≤70%"
+            badge="Safe <40% | Risky 40–60% | Reject >60%"
           />
           <StatRow
             label="Disposable Income"
             value={<span className={dispColor}>{dispPct}%</span>}
-            badge="threshold: ≥20% | ≥15%"
+            badge="Safe ≥20%"
           />
-          {result.monthlyExpenses > 0 && (
-            <StatRow
-              label="Net Cash After All"
-              value={
-                <span className={(result.income - result.existingEMIs - result.newEMI - result.monthlyExpenses) >= 0 ? 'text-blue-300' : 'text-rose-400'}>
-                  ₹{fmt(result.income - result.existingEMIs - result.newEMI - result.monthlyExpenses)}
-                </span>
-              }
-              badge="income − EMIs − expenses"
-            />
-          )}
+          <StatRow
+            label="Net Cash Flow"
+            value={
+              <span className={ncfColor}>
+                ₹{fmt(result.netCashFlow ?? (result.income - result.existingEMIs - result.newEMI - result.monthlyExpenses))}
+              </span>
+            }
+            badge={ncfPct !== null ? (parseFloat(ncfPct) >= 10 ? `${ncfPct}% of income ✓` : `${ncfPct}% of income ⚠`) : 'income − EMIs − expenses'}
+          />
         </div>
 
         {/* Decision Reason */}
@@ -115,7 +119,7 @@ export default function ResultCard({ result }) {
             {result.status === 'CONDITIONAL' && <AlertCircle className="w-4 h-4" />}
             {result.status === 'REJECT' && <XCircle className="w-4 h-4" />}
             {result.status === 'APPROVE' ? 'Why you were approved' :
-             result.status === 'CONDITIONAL' ? 'What this means for you' :
+             result.status === 'CONDITIONAL' ? 'Why this is flagged as Risky' :
              'Why you were not approved'}
           </p>
           <p className="leading-relaxed">

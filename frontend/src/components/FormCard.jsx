@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { calculateEMI, calculateDTI, calculateDisposablePct } from '../App';
+import { calculateEMI, calculateDTI, calculateDisposablePct, calculateNetCashFlow } from '../App';
 import FeeBumpBadge from './FeeBumpBadge';
 
 function usePreview(formData) {
@@ -13,13 +13,13 @@ function usePreview(formData) {
 
     if (!income || !loanAmount) return null;
 
-    const newEMI = calculateEMI(loanAmount, interestRate, tenure);
-    const dti = calculateDTI(existingEMIs, newEMI, income);
+    const newEMI       = calculateEMI(loanAmount, interestRate, tenure);
+    const dti          = calculateDTI(existingEMIs, newEMI, income);
     const disposablePct = calculateDisposablePct(income, existingEMIs, newEMI);
-    // Net take-home = income minus ALL outflows (EMIs + expenses) — informational only
-    const netTakeHome = income - existingEMIs - newEMI - monthlyExpenses;
+    const netCashFlow  = calculateNetCashFlow(income, existingEMIs, newEMI, monthlyExpenses);
+    const netCashFlowPct = (netCashFlow / income) * 100;
 
-    return { newEMI, dti, disposablePct, netTakeHome, monthlyExpenses };
+    return { newEMI, dti, disposablePct, netCashFlow, netCashFlowPct, monthlyExpenses };
   }, [formData]);
 }
 
@@ -49,19 +49,32 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
 
   const dtiPct = preview ? (preview.dti * 100).toFixed(1) : null;
 
+  // DTI: <40% safe (green), 40–60% risky (amber), >60% reject (red)
   const dtiColor = !preview ? 'text-gray-400'
-    : preview.dti <= 0.55 ? 'text-emerald-400'
-    : preview.dti <= 0.70 ? 'text-amber-400' : 'text-rose-400';
+    : preview.dti < 0.40 ? 'text-emerald-400'
+    : preview.dti <= 0.60 ? 'text-amber-400' : 'text-rose-400';
 
+  // Disposable: ≥20% safe (green), <20% risky (amber/red)
   const dispColor = !preview ? 'text-gray-400'
     : preview.disposablePct >= 20 ? 'text-emerald-400'
-    : preview.disposablePct >= 15 ? 'text-amber-400' : 'text-rose-400';
+    : preview.disposablePct >= 10 ? 'text-amber-400' : 'text-rose-400';
 
+  const ncfColor = !preview ? 'text-gray-400'
+    : preview.netCashFlow > 0 ? 'text-blue-300' : 'text-rose-400';
+
+  // Verdict mirrors the decision engine hierarchy
   const verdict = !preview ? null
-    : preview.newEMI > parseFloat(formData.income || 0) ? { text: '⚠ EMI exceeds income — will be Rejected', cls: 'text-rose-400 bg-rose-500/10' }
-    : preview.dti <= 0.55 && preview.disposablePct >= 20 ? { text: '✓ Likely APPROVED', cls: 'text-emerald-400 bg-emerald-500/10' }
-    : preview.dti <= 0.70 && preview.disposablePct >= 15 ? { text: '~ You may qualify — bank will verify your details', cls: 'text-amber-400 bg-amber-500/10' }
-    : { text: '✗ Likely REJECTED', cls: 'text-rose-400 bg-rose-500/10' };
+    : preview.netCashFlow < 0
+      ? { text: '✗ REJECTED — Net cash flow is negative', cls: 'text-rose-400 bg-rose-500/10' }
+    : preview.dti > 0.60
+      ? { text: '✗ REJECTED — DTI exceeds hard limit of 60%', cls: 'text-rose-400 bg-rose-500/10' }
+    : (preview.dti >= 0.40 && preview.dti <= 0.60)
+      ? { text: '⚠ RISKY — DTI is in the 40–60% risk zone', cls: 'text-amber-400 bg-amber-500/10' }
+    : preview.disposablePct < 20
+      ? { text: '⚠ RISKY — Disposable income below 20%', cls: 'text-amber-400 bg-amber-500/10' }
+    : (preview.dti < 0.40 && preview.disposablePct >= 20 && preview.netCashFlowPct < 10)
+      ? { text: '⚠ RISKY — Net cash flow < 10% of income', cls: 'text-amber-400 bg-amber-500/10' }
+    : { text: '✓ APPROVED — DTI, disposable & cash flow all healthy', cls: 'text-emerald-400 bg-emerald-500/10' };
 
   return (
     <div className="glass-card p-5 sm:p-8 w-full relative group shadow-2xl">
@@ -146,7 +159,7 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
                 <span className="text-gray-400">DTI Ratio</span>
                 <div className="text-right">
                   <span className={`font-mono font-bold ${dtiColor}`}>{dtiPct}%</span>
-                  <span className="ml-2 text-xs text-gray-600">≤55% ✓ · ≤70% ~</span>
+                  <span className="ml-2 text-xs text-gray-600">Safe &lt;40% · Risky 40–60% · Reject &gt;60%</span>
                 </div>
               </div>
 
@@ -154,19 +167,22 @@ export default function FormCard({ formData, handleInputChange, checkEligibility
                 <span className="text-gray-400">Disposable Income</span>
                 <div className="text-right">
                   <span className={`font-mono font-bold ${dispColor}`}>{preview.disposablePct.toFixed(1)}%</span>
-                  <span className="ml-2 text-xs text-gray-600">≥20% ✓ · ≥15% ~</span>
+                  <span className="ml-2 text-xs text-gray-600">Safe ≥20%</span>
                 </div>
               </div>
 
-              {/* Net take-home (includes expenses) */}
-              {preview.monthlyExpenses > 0 && (
-                <div className="flex justify-between items-center pt-1 border-t border-glass-border/30">
-                  <span className="text-gray-500 text-xs">Net Cash After All Outflows</span>
-                  <span className={`font-mono font-semibold text-xs ${preview.netTakeHome >= 0 ? 'text-blue-300' : 'text-rose-400'}`}>
-                    ₹{fmt(preview.netTakeHome)}
+              {/* Net Cash Flow — always shown */}
+              <div className="flex justify-between items-center pt-1 border-t border-glass-border/30">
+                <span className="text-gray-400 text-xs">Net Cash Flow</span>
+                <div className="text-right">
+                  <span className={`font-mono font-semibold text-xs ${ncfColor}`}>
+                    ₹{fmt(preview.netCashFlow)}
+                  </span>
+                  <span className="ml-2 text-xs text-gray-600">
+                    {preview.netCashFlowPct >= 10 ? '≥10% ✓' : '<10% ⚠'}
                   </span>
                 </div>
-              )}
+              </div>
 
               {/* Quick verdict */}
               <div className={`mt-1 text-xs font-semibold text-center py-1.5 rounded-md ${verdict.cls}`}>

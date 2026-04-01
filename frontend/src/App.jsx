@@ -36,39 +36,78 @@ export function calculateDisposablePct(income, existingEMIs, newEMI) {
 }
 
 /**
- * 3-Tier Decision Logic:
- *   IF EMI > Income → REJECT
- *   ELSE IF DTI ≤ 0.55 AND Disposable% ≥ 20% → APPROVE
- *   ELSE IF DTI ≤ 0.70 AND Disposable% ≥ 15% → CONDITIONAL
- *   ELSE → REJECT
+ * Net Cash Flow = Income – (Existing EMIs + New EMI + Expenses)
  */
-export function evaluateEligibility(income, existingEMIs, newEMI) {
-  const dti = calculateDTI(existingEMIs, newEMI, income);
-  const disposablePct = calculateDisposablePct(income, existingEMIs, newEMI);
+export function calculateNetCashFlow(income, existingEMIs, newEMI, expenses) {
+  return income - existingEMIs - newEMI - expenses;
+}
+
+// ─── Structured Decision Engine ──────────────────────────────────────────────
+// Tier 1 – Hard Reject:   Net Cash Flow < 0  OR  DTI > 0.60
+// Tier 2 – Risk Zone:     DTI 0.40–0.60  OR  Disposable < 20%
+// Tier 3 – Approved:      DTI < 0.40  AND  Disposable ≥ 20%  AND  NCF > 0
+// Conflict override:      DTI < 0.40 but NCF < 10% of income → RISKY
+
+export function evaluateEligibility(income, existingEMIs, newEMI, expenses = 0) {
+  if (income <= 0) {
+    return {
+      status: 'REJECT',
+      reason: 'Income must be greater than zero.',
+      dti: Infinity,
+      disposablePct: 0,
+      netCashFlow: 0,
+      netCashFlowPct: 0,
+    };
+  }
+
+  const dti            = calculateDTI(existingEMIs, newEMI, income);
+  const disposablePct  = calculateDisposablePct(income, existingEMIs, newEMI);
+  const netCashFlow    = calculateNetCashFlow(income, existingEMIs, newEMI, expenses);
+  const netCashFlowPct = (netCashFlow / income) * 100;
+
+  const dtiPct  = (dti * 100).toFixed(1);
+  const dispStr = disposablePct.toFixed(1);
+  const ncfStr  = fmt(netCashFlow);
 
   let status, reason;
 
-  if (newEMI > income) {
+  // ── Tier 1: Hard Reject ───────────────────────────────────────────────────
+  if (netCashFlow < 0) {
     status = 'REJECT';
-    reason = 'EMI_EXCEEDS_INCOME';
-  } else if (dti <= 0.55 && disposablePct >= 20) {
-    status = 'APPROVE';
-    reason = `Approved because DTI is ${(dti * 100).toFixed(0)}% and disposable income is ${disposablePct.toFixed(0)}%`;
-  } else if (dti <= 0.70 && disposablePct >= 15) {
+    reason = `Rejected because your net cash flow is negative (₹${ncfStr}). After paying all EMIs and expenses, you'd have nothing left — this loan is not serviceable.`;
+  } else if (dti > 0.60) {
+    status = 'REJECT';
+    reason = `Rejected because your DTI is ${dtiPct}%, which exceeds the hard limit of 60%. This indicates your total EMI burden is too high relative to your income.`;
+
+  // ── Tier 2: Risk Zone ─────────────────────────────────────────────────────
+  } else if (dti >= 0.40 && dti <= 0.60) {
     status = 'CONDITIONAL';
-    reason = `Good news — your profile looks possible! Your DTI is ${(dti * 100).toFixed(0)}% and you'd have ${disposablePct.toFixed(0)}% of your income left after EMIs. A bank may approve this after verifying your documents or salary slips.`;
+    reason = `Flagged as Risky — your DTI is ${dtiPct}% (safe threshold: <40%, risky: 40–60%). A lender may review this further. Your disposable income is ${dispStr}% and net cash flow is ₹${ncfStr}.`;
+  } else if (disposablePct < 20) {
+    status = 'CONDITIONAL';
+    reason = `Flagged as Risky — your disposable income is only ${dispStr}%, which is below the safe threshold of 20%. This means there is limited financial buffer after EMI payments.`;
+
+  // ── Tier 3: Conflict Check ────────────────────────────────────────────────
+  } else if (dti < 0.40 && disposablePct >= 20 && netCashFlowPct < 10) {
+    status = 'CONDITIONAL';
+    reason = `Flagged as Risky — although your DTI is a healthy ${dtiPct}%, your net cash flow (₹${ncfStr}) is less than 10% of your income after all outflows. This leaves very little financial cushion.`;
+
+  // ── Tier 3: Approved ──────────────────────────────────────────────────────
+  } else if (dti < 0.40 && disposablePct >= 20 && netCashFlow > 0) {
+    status = 'APPROVE';
+    reason = `Approved because DTI is ${dtiPct}% (safe: <40%), disposable income is ${dispStr}%, and net cash flow is positive (₹${ncfStr}). Your financial profile comfortably supports this loan.`;
+
+  // ── Fallback ──────────────────────────────────────────────────────────────
   } else {
     status = 'REJECT';
-    if (dti > 0.70 && disposablePct < 15) {
-      reason = `Rejected because DTI is ${(dti * 100).toFixed(0)}% (max 70%) and disposable income is only ${disposablePct.toFixed(0)}% (min 15%).`;
-    } else if (dti > 0.70) {
-      reason = `Rejected because DTI is ${(dti * 100).toFixed(0)}%, which exceeds the maximum allowed limit of 70%.`;
-    } else {
-      reason = `Rejected because disposable income is only ${disposablePct.toFixed(0)}%, which is below the minimum required 15%.`;
-    }
+    reason = `Rejected — DTI is ${dtiPct}%, disposable income is ${dispStr}%, and net cash flow is ₹${ncfStr}. One or more metrics fell outside the acceptable range.`;
   }
 
-  return { status, reason, dti, disposablePct };
+  return { status, reason, dti, disposablePct, netCashFlow, netCashFlowPct };
+}
+
+function fmt(n) {
+  return new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 }).format(n);
 }
 
 // Tracker logic removed. Enforcing strict Rust backend.
@@ -139,10 +178,10 @@ function App() {
   };
 
   const prepareStellarTransaction = (publicKey) => ({
-    checkEligibility: async (income, existingEMIs, loanAmount, interestRate, tenure) => {
+    checkEligibility: async (income, existingEMIs, loanAmount, interestRate, tenure, expenses) => {
       // 1. Math computation for visual display
       const newEMI = calculateEMI(loanAmount, interestRate, tenure);
-      const { status, reason, dti, disposablePct } = evaluateEligibility(income, existingEMIs, newEMI);
+      const { status, reason, dti, disposablePct, netCashFlow, netCashFlowPct } = evaluateEligibility(income, existingEMIs, newEMI, expenses);
 
       try {
         // 2. Import Soroban SDK Bindings (dynamically to avoid React hydration issues)
@@ -200,7 +239,7 @@ function App() {
 
         return {
           wait: async () => ({ hash: txResult.hash }),
-          resultData: { status, reason, dti, disposablePct, newEMI, gasless },
+          resultData: { status, reason, dti, disposablePct, netCashFlow, netCashFlowPct, newEMI, gasless },
         };
       } catch (error) {
         console.error('Stellar Network Error:', error);
@@ -281,7 +320,7 @@ function App() {
     setResult(null);
 
     try {
-      const tx = await contract.checkEligibility(income, existingEMIs, loanAmount, interestRate, tenure);
+      const tx = await contract.checkEligibility(income, existingEMIs, loanAmount, interestRate, tenure, monthlyExpenses);
       const receipt = await tx.wait();
 
       const newResult = {
@@ -297,6 +336,8 @@ function App() {
         newEMI: tx.resultData.newEMI,
         dti: tx.resultData.dti,
         disposablePct: tx.resultData.disposablePct,
+        netCashFlow: tx.resultData.netCashFlow,
+        netCashFlowPct: tx.resultData.netCashFlowPct,
         timestamp: Date.now(),
       };
 
