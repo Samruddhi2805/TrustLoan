@@ -237,7 +237,7 @@ This system was tested across three scenarios to validate the correctness and ro
 * Decision: **APPROVED**
 
 
-  **Screenshot**
+**Screenshot:-**
 
 
 <img width="1918" height="1017" alt="trsutloan approved" src="https://github.com/user-attachments/assets/cb7d674b-8856-414c-a06d-7904a9a39105" />
@@ -270,7 +270,7 @@ The system correctly approves financially stable applicants.
 * Decision: **RISKY**
   
 
-   **Screenshot**
+**Screenshot:-**
 
 
 <img width="1918" height="1012" alt="trsutloan Risky" src="https://github.com/user-attachments/assets/45e92800-f9d8-4f4a-987b-0b3e7977e8f9" />
@@ -303,7 +303,7 @@ The system identifies borderline cases and avoids over-approving risky applicant
 * Decision: **REJECTED**
   
 
-  **Screenshot**
+**Screenshot:-**
 
 
 <img width="1918" height="1017" alt="trsutloan rejected" src="https://github.com/user-attachments/assets/b957efcb-0f04-451f-b3f2-1f97313dd8d8" />
