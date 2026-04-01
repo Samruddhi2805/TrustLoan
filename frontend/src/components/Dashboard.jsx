@@ -104,7 +104,7 @@ export default function Dashboard({ account, history }) {
     : '0.00';
   
   const approvalRate = totalChecks > 0
-    ? ((history.filter(h => h.status === 'APPROVE').length / totalChecks) * 100).toFixed(0)
+    ? ((history.filter(h => h.status === 'APPROVE' || h.status === 'APPROVED').length / totalChecks) * 100).toFixed(0)
     : 0;
 
   return (
@@ -202,12 +202,12 @@ export default function Dashboard({ account, history }) {
                       <span className="bg-black/30 px-2 py-1 rounded">{(item.dti * 100).toFixed(1)}%</span>
                     </td>
                     <td className="p-4">
-                      {item.status === 'APPROVED' ? (
+                      {(item.status === 'APPROVED' || item.status === 'APPROVE') ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                           <CheckCircle className="w-3.5 h-3.5" />
                           APPROVED
                         </span>
-                      ) : item.status === 'RISKY' ? (
+                      ) : (item.status === 'RISKY' || item.status === 'CONDITIONAL') ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-500 border border-amber-500/20">
                           <AlertCircle className="w-3.5 h-3.5" />
                           RISKY
