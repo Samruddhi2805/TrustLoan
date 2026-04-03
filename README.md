@@ -53,7 +53,8 @@ Currently, TrustLoan Lite has been tested by the following real `Stellar Testnet
 
 | User Name | User Email | User Wallet Address | Commit ID (Where changes made according to the userfeedback) |
 | --- | --- | --- | --- |
-| | | | |
+| Nikita Biradar | nikitabiradar300@gmail.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA | 59406f0a346d71c1ee27ddfaf10fdd456042148d |
+| sudhakar sutar | sudhakarsutar101@gmail.com | GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2 | 5900bc919c513a9e7d91ab9df2cccc017ff4379c |
 
 ### Future Improvements (Post-Iteration Plan)
 Based on current user feedback and platform analysis, our next major technical updates include:
