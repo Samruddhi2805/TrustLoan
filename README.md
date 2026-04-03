@@ -231,17 +231,11 @@ Logs of iterative changes made based on direct user feedback requested.
 
 | User Name | User Email | User Wallet Address | Commit ID (Where changes made according to the user feedback) |
 |-----------|------------|---------------------|-----------------------------------|
-| Nikita Biradar | nikitabiradar300@gmail.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA | `5900bc919c513a9e7d91ab9df2cccc017ff4379c` (fix: dashboard legacy UI compatibility based on user visual bug report) |
-| Harshal Jagdale | harshaljagdale0296@gmail.com | GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY | `3c7c26f` (fix: resolved status inconsistency in Indexer based on user feedback) |
-| Sayali Nighot | Sayali19425@gmail.com | GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE | `59406f0` (feat: enhanced "Risky" status reasoning text with multi-factor detailing) |
-| Nayan Palande | npalande2106@gmail.com | GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2 | `5900bc9` (refactor: exact alignment with user decision status labelsAPPROVED/RISKY/REJECTED) |
-| sudhakar sutar | sudhakarsutar101@gmail.com | GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2 | `daaf39a` (feat: implemented structured decision engine thresholds as requested) |
-
----
-
-Good. You’re thinking about presentation now—which is what actually gets you marks.
-
-Don’t improvise this. Use a clean, structured README section like below and paste it directly.
+| Nikita Biradar | nikitabiradar300@gmail.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA | `59406f0a346d71c1ee27ddfaf10fdd456042148d` (fix: Reasoning for Approval or rejection) |
+| Harshal Jagdale | harshaljagdale0296@gmail.com | GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY | `3c7c26f5c07dfdb6d021ec49eae4576df2776812` (fix: resolve status and metric inconsistency in Dashboard history and Indexer and based on user feedback) |
+| Sayali Nighot | Sayali19425@gmail.com | GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE | `59406f0a346d71c1ee27ddfaf10fdd456042148d` (feat: enhanced "Risky" status reasoning text with multi-factor detailing) |
+| Nayan Palande | npalande2106@gmail.com | GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2 | `3670e424685b01ebbf2618542902b8f96ab4850e` (refactor: showed live on-chain activity feed and approve status) |
+| sudhakar sutar | sudhakarsutar101@gmail.com | GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2 | `5900bc919c513a9e7d91ab9df2cccc017ff4379c` (refactor: strict alignment with user decision logic and labels) |
 
 ---
 
