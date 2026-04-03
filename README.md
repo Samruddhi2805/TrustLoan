@@ -231,7 +231,7 @@ Logs of iterative changes made based on direct user feedback requested.
 
 | User Name | User Email | User Wallet Address | Commit ID (Where changes made according to the user feedback) |
 |-----------|------------|---------------------|-----------------------------------|
-| Nikita Biradar | nikitabiradar300@gmail.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA | `260dccf` (fix: dashboard legacy UI compatibility based on user visual bug report) |
+| Nikita Biradar | nikitabiradar300@gmail.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA | `5900bc919c513a9e7d91ab9df2cccc017ff4379c` (fix: dashboard legacy UI compatibility based on user visual bug report) |
 | Harshal Jagdale | harshaljagdale0296@gmail.com | GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY | `3c7c26f` (fix: resolved status inconsistency in Indexer based on user feedback) |
 | Sayali Nighot | Sayali19425@gmail.com | GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE | `59406f0` (feat: enhanced "Risky" status reasoning text with multi-factor detailing) |
 | Nayan Palande | npalande2106@gmail.com | GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2 | `5900bc9` (refactor: exact alignment with user decision status labelsAPPROVED/RISKY/REJECTED) |
