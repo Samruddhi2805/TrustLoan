@@ -85,10 +85,15 @@ export default function Dashboard({ account, history }) {
                       <span className="bg-black/30 px-2 py-1 rounded">{item.dti}</span>
                     </td>
                     <td className="p-4">
-                      {item.approved ? (
+                      {item.status === 'APPROVE' ? (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                           <CheckCircle className="w-3.5 h-3.5" />
-                          APPROVED
+                          {item.reason || 'APPROVED'}
+                        </span>
+                      ) : item.status === 'CONDITIONAL' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          {item.reason}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-rose-500/10 text-rose-500 border border-rose-500/20">

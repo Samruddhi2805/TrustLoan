@@ -49,6 +49,12 @@ Currently, TrustLoan Lite has been tested by the following real `Stellar Testnet
 ### Ongoing User Feedback
 *All responses from our early testnet users are exported from Google Forms and actively tracked on our attached Excel Sheet at the top of this document.*
 
+## User Feed Implementation
+
+| User Name | User Email | User Wallet Address | Commit ID (Where changes made according to the userfeedback) |
+| --- | --- | --- | --- |
+| | | | |
+
 ### Future Improvements (Post-Iteration Plan)
 Based on current user feedback and platform analysis, our next major technical updates include:
 - Refactoring `DTI` metrics to dynamically capture real network balances via `horizon.stellar.org`.

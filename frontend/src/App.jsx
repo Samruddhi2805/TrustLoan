@@ -282,6 +282,7 @@ function App() {
 
       const newResult = {
         status: tx.resultData.status,
+        approved: tx.resultData.status === 'APPROVE',
         reason: tx.resultData.reason,
         txHash: receipt.hash,
         income,
