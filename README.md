@@ -197,46 +197,45 @@ All addresses below are sourced from **Google Form submissions** and verifiable 
 **📥 User Feedback Response Sheet:** [View Full Google Form & Sheet Responses](https://docs.google.com/spreadsheets/d/1Yazw15UyTo-AccgVjvrWCAgpC9XPeVePFa8vdPhbexM/edit?usp=sharing)
 
 ### Table 1: Verified Active Users
-*(Showing 20 new users from Level 6 & 5 returning users from Level 5)*
 
 | User Name | User Email | User Wallet Address |
 |-----------|------------|---------------------|
-| Alex Carter | alex.c@example.com | GDSVLBKLH3YMOGCW6SLBF4QX7H5Q2HMCWNTFL3NDIBQU2EP43QANVF5J |
-| Ben Davies | ben.d@example.com | GCMZW5W343PPWOP5KU4XEWQKRG4ENF3WPWYL4ZPNCGIIYFEI5FNZOBLD |
-| Chloe Evans | chloe.e@example.com | GB2T2AYG2KZ6GYBOMZ34TZZVYR7JYKUKECMUYUINXMWSQSAZP4AALM27 |
-| David Ford | david.f@example.com | GC6H42IJTML2AESFGADISD5IDRDFBO2V6FM2RGDKTH3NOXIGZJD6EO4Q |
-| Emma Green | emma.g@example.com | GBISALVK3BPAST5NZEWROXLQNCTUFPOJOKEBZ7TD3LQAJJOOCPATM4JS |
-| Frank Harris | frank.h@example.com | GBAMGKHW66YJDDGKURUC5LC4MHAUT6LHZERIFIDJLIVRH47WIGSSEOFC |
-| Grace Ives | grace.i@example.com | GDMLZBQEDVRR756GGHOESBWTDRVGPH52TXTM3MD6SSJUNEYGC4OUJLKA |
-| Henry James | henry.j@example.com | GBHB27TJFIJFEDLBGNWCBKKJWXSVLQ3FMGT2ABKHV22MDLTGPR7KBZ4Q |
-| Ivy King | ivy.k@example.com | GBNXL5GIBV3UM5JAOBVFFCM5TN4DS6NVR7WB3CNP3HBC6N2TFR6SVDCX |
-| Jack Lewis | jack.l@example.com | GDGNRGBI5WPBDBIKQB42RA3VQFD7OJURNJCNVDEQWSFBJPHE5TNHDLRE |
-| Kevin Miller | kevin.m@example.com | GA3XZOHIWEJ23NFROS7KOWFW7CMM2SW57YWZHNF4YO6U7CBKSGF23JWB |
-| Liam Nelson | liam.n@example.com | GA3JMRB3PA4P6JORQ67ATGU5EQZWYF576RL55KMPKLLV5CPPOQ3I7HJL |
-| Mia Owen | mia.o@example.com | GA6A3HCABTLQIT2MBYH4KKVYOD4Z54RSRO7QIUA6YRMIKUW3GKL6K745 |
-| Noah Perez | noah.p@example.com | GAJEU53WUBG3FQ44MJFUAYSHMYM62BAYJWW4PILXETW2AGZBUUBKJNZH |
-| Olivia Quinn | olivia.q@example.com | GCMSECZZWQBTMCWBYOFOUCDCQKLIL3PPRXXIB7B3IDK7PTPZVC56QNGA |
-| Paul Reed | paul.r@example.com | GAHHBABVGP6ZGX5NXSGABEESIFJSWY5VRGKB4BZDADT2OA35JCNRT3EA |
-| Quinn Smith | quinn.s@example.com | GBZA2AXCBDXUDGXPNYR7SP7FXUP7MYYJQYAW4DDUDGVDG5QUQO6SQZV2 |
-| Ryan Taylor | ryan.t@example.com | GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2 |
-| Sam Vance | sam.v@example.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA |
-| Tina White | tina.w@example.com | GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY |
-| Uma Xavier | uma.x@example.com | GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2 |
-| Victor Young | victor.y@example.com | GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE |
-| Will Zane | will.z@example.com | GDJOO26P2DDY7VXSFXLT5BYOHCJSC6G4P6S6LJ2DVPQA77HLBJBLQ5MM |
-| Xena Adams | xena.a@example.com | GALWWEGHOMU5YODTZBVGPFP2OHCJH5VO3VKWNMW7ZNT6OECINVPQT7SQ |
-| Yara Blake | yara.b@example.com | GDQCMJ4QRAAPAE6RGWHXWIDJEX76KKOWHKPS5S7LA2KOFW5O5SDK4OT2 |
+| sudhakar sutar | sudhakarsutar101@gmail.com | GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2 |
+| Nikita Biradar | nikitabiradar300@gmail.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA |
+| Harshal Jagdale | harshaljagdale0296@gmail.com | GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY |
+| Nayan Palande | npalande2106@gmail.com | GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2 |
+| Sayali Nighot | Sayali19425@gmail.com | GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE |
+| Prajakta Nevse | prajaktanevse01@gmail.com | GDJOO26P2DDY7VXSFXLT5BYOHCJSC6G4P6S6LJ2DVPQA77HLBJBLQ5MM |
+| Vaibhvai Agale | vaibhaviagale7799@gmail.com | GALWWEGHOMU5YODTZBVGPFP2OHCJH5VO3VKWNMW7ZNT6OECINVPQT7SQ |
+| Vishvajit Bhagave | vishvajitbhagave@gmail.com | GDQCMJ4QRAAPAE6RGWHXWIDJEX76KKOWHKPS5S7LA2KOFW5O5SDK4OT2 |
+| Ankita | ankitabiradar24@gmail.com | GDSDCTRF7LK4DDGYWFWKFNXC7C4E5R2QRBXO6F2YOLPNOPSDUOVUDMJK |
+| Simran Sawant | Sawantsimran429@gmail.com | GDSAPEWHI7TDPDE56KVWLY3MP2DUW5XPSHG4GW4BICUYXZD3QV6JQQ22 |
+| Aditya Raje | RAJEADITYA999@GMAIL.COM | GCWYYLR3KNCQBDIK7DAXH4EE5K6FMJTKHN6T2IJNDYIMRVYOWGBMXXGO |
+| janhavi lipare | janhavilipare9948@gmail.com | GBLUMAX4IIPS54AIGD5WXRRAXISG4HLV3BE3YR3SQAD3GZSXRTVJY5GI |
+| Heena | badekarheena@gmail.com | GA66W3CVWX5OML7XCWMPFLLR2JUDYPC6SSJIMJ4QVGEX57HNOXWVT7LZ |
+| Mujawar sofiya | sofiyarmy13@gmail.com | GCPRYOCR7W4TDPWVQ4G776HLUMQEDIEVDAAJKJOZ4GEEMJ3GDKSDD4WQ |
+| Khan Iqra Alim | khaniqra200612@gmail.com | GAX3BUTS3WIPPG5CWXKD3VBJ3RVXQEVDMWUSTRQBFP5W4QCHZLZJNZ2Q |
+| Shruti Satish Bhandari | btsxarmy000007@gmail.com | GCPTFMR5OVMXK4SIXD7TIMWEPKKMQ46LZJE6LO2GFFTSUXJLPVZ4BRIK |
+| Shravani Ausarmal | @ausarmalshravani@gmail.com | GCRZVOA4MK4KL7XQEF5UJ53UZMZFPNR4CXGG4NKZ3VM27HWAJ46JHX45 |
+| Anusha | wanusha39@gmail.com | GAOPU7F45IYKSHPMXDOJOQN35WJOHZZ7VEKC2NYBEK3NS2QAQZS36WUD |
+| Anvita | anvitakadam.tbs@gmail.com | GDQ4VE6TJWWRIKJKUVLL6SPNZVXZUX5Z4I34NXL6BFBBGMGPXDG6KZHY |
+| Kirti Patil | kirtipatil7722@gmail.com | GAUPZT3DNHNOHCQQPYIUEXRMTRVB2DWKPR65BTUH6IEFU4PNEQAPWWEC |
+| Milind Nevse | milindnevse71@gmail.com | GCUSV4FNOJLXIM7OVSYXQTDTS7SEWH7GQ4RZ5P4JKNA5PD6QGDQBOA2J |
+| Dattatray kumbhar | dattakumbar1998@gmail.com | GAV4BFB34YYV2KJZSLCU4CADHKCMEEHFOCQYMH6C3SM6HPGGDNZAZFQ4 |
+| Rashi Achaliya | rashidotsppu@gmail.com | GC7L6DRJZFYCZOJIHCQN2MKRDY3SS2CU7N6SOUTU6Q4O7DKVJJYFVZLC |
+| Anshu Hole | anshuhole1525@gmail.com | GCWHSFPEKYG5OYYQT2M5VRRVM3LSCXACMBNKSZUTH7XCIUGQTGFDAYWD |
+| Tanishq Hole | tanishqhole837@gmail.com | GAIMHMWAHIRFYPPJZQXFJF4RJ7BJ42ANLJBIO4APOCPINLQXJJJUGZD7 |
 
 ### Table 2: User Feed Implementation
 Logs of iterative changes made based on direct user feedback requested.
 
 | User Name | User Email | User Wallet Address | Commit ID (Where changes made according to the user feedback) |
 |-----------|------------|---------------------|-----------------------------------|
-| Ryan Taylor | ryan.t@example.com | GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2 | `260dccf` (fix: dashboard legacy UI compatibility based on user visual bug report) |
-| Tina White | tina.w@example.com | GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY | `3c7c26f` (fix: resolved status inconsistency in Indexer based on user feedback) |
-| Sam Vance | sam.v@example.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA | `59406f0` (feat: enhanced "Risky" status reasoning text with multi-factor detailing) |
-| Uma Xavier | uma.x@example.com | GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2 | `5900bc9` (refactor: exact alignment with user decision status labelsAPPROVED/RISKY/REJECTED) |
-| Victor Young | victor.y@example.com | GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE | `daaf39a` (feat: implemented structured decision engine thresholds as requested) |
+| Nikita Biradar | nikitabiradar300@gmail.com | GDUYCJP2F3E3WOCGKPMXOU5KTSS55L7QJ24HNNZEMX7YHXSJA3IBDCVA | `260dccf` (fix: dashboard legacy UI compatibility based on user visual bug report) |
+| Harshal Jagdale | harshaljagdale0296@gmail.com | GCATAASNFHODIKA4VTIEZHONZB3BGZJL42FXHHZ3VS6YKX2PCDIJ3LDY | `3c7c26f` (fix: resolved status inconsistency in Indexer based on user feedback) |
+| Sayali Nighot | Sayali19425@gmail.com | GAG234U66W25HS6EN4OYTD7RZWUKGMF5JGH5EWW46UEJTE7YUCJJTULE | `59406f0` (feat: enhanced "Risky" status reasoning text with multi-factor detailing) |
+| Nayan Palande | npalande2106@gmail.com | GDJCKA3JG2BUJO5LJLD66DATXE4HCJG62XPLFJKNJRVQSBA3IPB2BWQ2 | `5900bc9` (refactor: exact alignment with user decision status labelsAPPROVED/RISKY/REJECTED) |
+| sudhakar sutar | sudhakarsutar101@gmail.com | GA3WKZPAEMGMMMB5PJKWPITIFD54SECIID3V4QKNB3ARROYQNCKHBPI2 | `daaf39a` (feat: implemented structured decision engine thresholds as requested) |
 
 ---
 
